@@ -1,0 +1,2774 @@
+---
+title: "Predicción del rendimiento académico de estudiantes"
+author: "Julia García Vega"
+date: "23/5/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Resumen
+
+El rendimiento académico de los estudiante en los últimos cursos previos a la universidad es uno de los aspectos más importantes en cuanto a su futuro académico y posteriormente laboral. Este rendimiento puede estar influenciado ya no solo por el trabajo del estudiante si no por una multitud de factores relacionados con su entorno. Este estudio, con la información recodiga de estudiantes de dos centros educativos portugueses de cuarto de la ESO y bachiller, explora los posibles factores sociales significativos junto con la influencia de las notas de los trimestres previos con respecto a la nota en dos de las asignaturas troncales, las matemáticas y el portugués, mediante las siguientes técnicas: regresión lineal, regresión logística, redes neuroales, máquinas de soporte vectorial, Bayes ingenuo, arboles de clasificación y random forest. Se evaluán tres escenarios distintos: considerando que no se tiene ninguna nota previa, considerando que solo se tienen la nota del primer trimestre, la variable G1, y finalmente considerando que se tienen las notas de los dos trimestres previos, las variables G1 y G2. Los resultados obtenidos indican que las variables G1 y G2 están altamente correlacionadas con G3 y por ello tienen gran influencia en la nota final. En el escenario de no tener niguna nota previa, en la asignatura de portugués, se observa como el colegio Mousinho da Silveira, el género masculino, los suspensos, el apoyo del colegio, la salud regular o muy bien y las ausencias son factores significativos que influyen de forma negativa en la nota final, especialmente los suspensos. Sin embargo, la edad, el tiempo de estudio superior a diez horas, el querer continuar con su educación, una buena o muy buena relación de familia, salir poco y tener poco  tiempo libre repercuten de manera positiva, especialmente el querer continuar con su educación. En la asigntura de matemáticas son menos las variables significativas pero sus coeficientes repercuten en la nota final de manera similar que en la asignatura de portugués. La pequeña diferencia entre ambas asignaturas se podría deber a la diferencia de datos entre ellas. En cuanto a la predicción de forma binaria en aprobado o suspenso los árboles de clasificación son el mejor método de predicción teniendo un porcentaje de clasificación correcta del 90% para la asignatura de portugués y de un 80% para la asignatura de matemáticas.
+
+## Introduccion
+
+Los datos se pueden obtener de la página web *Kaggle* o del repositorio UCI,los cuales a su vez, proceden de un estudio realizado por Paulo Cortez y Alice Silva de la Universidad de Minhoa a alumnos de dos colegios portugueses que cursan las asignaturas de matemáticas y/o portugués en el año escolar 2005-2006. Se cuenta con dos archivos csv,archivo cuyos valores están separados por comas, de misma organización pero uno con la información de los individuos que cursan matemáticas, que son 395 alumnos, y otro con la información de los individuos que cursan portugués, que son 649 alumnos. Existen individuos que cursan ambas asignaturas y por lo que están en ambos.Las filas de los archivos corresponden con los alumnos y las columnas con las 33 variables. Estas variables son las siguientes:
+
+* **school**: colegio del estudiante ('GP' = Gabriel Pereira, 'MS' = Mousinho da Silveira)
+* **sex**: género del estudiante ('F' = femenino, 'M' = masculino)
+* **age**: edad del estudiante
+* **address**: tipo de domicilio del estudiante ('U' = urbano o 'R' = rural)
+* **famsize**: tamaño de la familia del estudiante ('LE3' = menor o igual que 3, 'GT3' - mayor que 3)
+* **Pstatus**: estado de convivencia de los padres del estudiante ('T' = juntos, 'A' = separados)
+* **Medu**: educación de la madre del estudiante (0 = ninguna, 1 = hasta 4º EP, 2 = de 5º EP a 3º ESO, 3 = de 4º ESO a 2º Bachiller, 4  = estudios superiores)
+* **Fedu**: educación del padre del estudiante (0 = ninguna, 1 = hasta 4º EP, 2 = de 5º EP a 3º ESO, 3 = de 4º ESO a 2º Bachiller, 4  = estudios superiores)
+* **Mjob**: trabajo de la madre del estudiante ('teacher' = profesora, 'health' = sanitaria, 'services' = servicios civiles (p. ej. administrativa o policia), 'at_home' = ama de casa, 'other' = otro)
+* **Fjob**: trabajo del padre del estudiante ('teacher' = profesor, 'health' = sanitario, 'services' = servicios civiles (p. ej. administrativo o policia), 'at_home' = amo de casa, 'other' = otro)
+* **reason**: razón para elegir el colegio ('home' = cerca de casa, 'reputation' = su reputación, 'course' = sus asignaturas, 'other' = otras)
+* **guardian**: tutor legal del estudiante ('mother' = madre, 'father' = padre, 'other' = otros)
+* **traveltime**: tiempo de viaje de la casa del estudiante al colegio (1 = <15 min., 2 = 15-30 min., 3 = 30 min.-1 hora, 4 = >1 hora)
+* **studytime**: tiempo de estudio semanal (1 = <2 horas, 2 = 2-5 horas, 3 = 5-10 horas, 4 = >10 horas)
+* **failures**: numero de suspensos en asignaturas anteriores (n si n<3, si no 3)
+* **schoolsup**: apoyo educativo adicional (yes, no)
+* **famsup**: apoyo educativo familiar (yes, no)
+* **paid**: clases extra pagadas para la asignatura en cuestión (matemáticas o portugués) (yes, no)
+* **activities**: actividades extraescolares (yes, no)
+* **nursery**: fue a la guarderia (yes, no)
+* **higher**: quiere continuar con estudios superiores (yes, no)
+* **internet**: acceso a internet en casa (yes, no)
+* **romantic**: en una relación romántica (yes, no)
+* **famrel**: calidad de las relaciones familiares (1 = muy mal, 2 = mal, 3 = regular, 4 = bien, 5 = muy bien)
+* **freetime**: tiempo libre después del colegio (1 = nada o muy poco, 2 = poco, 3 = algo, 4 = suficiente, 5 = mucho)
+* **goout**: salir con amigos (1 = nada o muy poco, 2 = poco, 3 = algo, 4 = suficiente, 5 = mucho)
+* **Dalc**: consumo de alcohol en el día lectivo (1 = nada o muy poco, 2 = poco, 3 = algo, 4 = suficiente, 5 = mucho)
+* **Walc**: consumo de alcohol en el fin de semana (1 = nada o muy poco, 2 = poco, 3 = algo, 4 = suficiente, 5 = mucho)
+* **health**: estado de salud actual (1 = muy mal, 2 = mal, 3 = regular, 4 = bien, 5 = muy bien)
+* **absences**: número de ausencias escolares (de 0 a 93)
+* **G1**: nota del primer trimestre en la asignatura en cuestión (matemáticas o portugués) (de 0 a 20)
+* **G2**: nota del segundo trimestre asignatura en cuestión (matemáticas o portugués) (de 0 a 20)
+* **G3**: nota final en la asignatura en cuestión (matemáticas o portugués) (de 0 a 20)
+
+La variable respuesta es la última, G3, que es la nota final en la asignatura (matemáticas o portugués). Esta variable estará fuertemente correlacionada con las variables G1 y G2 ya que se trata de la nota final. Las notas están representadas en una escala de 0 a 20 debido a que ese es el sistema de puntuación en portugal. 
+
+Para contexto, a continuación se muestra un mapa con la ubicación de los colegios de los cuales proceden los datos.
+
+```{r}
+library(ggmap, warn.conflicts=F, quietly=T)
+bordes <- c(bottom = 37.1, top = 40.2, left = -10.05, right = -5.7)
+localizacion<-data.frame("colegio"=c("Mousinho da silveira", "Gabriel Pereira"), "latitud"=c(39.2914, 38.57),"altitud"=c(-7.43235,-7.9))
+mapK1 <- get_stamenmap(bordes, zoom=7, maptype = "toner")
+ggmap(mapK1) + geom_point(data = localizacion, mapping = aes(x = altitud, y = latitud, size =1), colour="red") +
+geom_text(data=localizacion, mapping = aes(x = altitud, y = latitud+0.2, label = colegio), colour="red")
+
+```
+
+
+## Métodos estadísticos  
+
+La nota final de ambas asignaturas se tratará de predecir de forma numérica mediante el método de regresión lineal múltiple y de forma binaria mediante los siguientes métodos: regresión logística, redes neuronales, máquinas de vectores de soporte, Naive Bayes y árboles de clasificación. 
+
+### Regresión lineal múltiple
+
+Este modelo es básico en la estadística. Consiste en expresar la variable que se quiere estudiar como una combinación lineal de otras variables independientes cada una con un peso determinado:  
+
+$y=\beta_0+\beta_1x_1+\beta_2x_2+...+\beta_kx_k$  
+
+Siendo $y$ la variable respuesta, $\beta_0, \beta_1, ..., \beta_k$ los pesos denominados coeficientes de regresión y $x_1, x_2, ..., x_k$ los valores de los atributos para el individuo. Esta expresión es el valor predicho de la variable respuesta. Para que fue el valor actual habría que considerar también un error aleatorio como sumando.
+
+La regresión lineal múltiple consiste en obtener aquellos coeficientes que hagan mínima la suma de las diferencias entre el valor actual y el predicho al cuadrado. Este método de obtención de los coeficientes de regresión se denomina método de mínimos cuadrados. Se pretende minimizar la siguiente ecuación para todos los individuos $i$:
+
+$\sum_{i=1}^n(y_i-\beta_0-\sum_{j=1}^k\beta_jx_{ij})$
+
+### Regresión logística
+
+La regresión logística permite predecir el resultado de una variable categórica en función de otras variables denominadas predictoras. Esta técnica se basa en construir un modelo de regresión lineal basado en una variable respuesta transformada que inicialmente solo podía tomar los valores 0 y 1.
+
+Sea $Pr[1|x_1,x_2, ..., x_j]$, la variable respuesta original, su transformación sería $log(Pr[1|x_1,x_2, ..., x_j])/(1-Pr[1|x_1,x_2, ..., x_j])$. Esta transformación es denominada transformación logarítmica. El modelo resultante es: $Pr[1|x_1,x_2, ..., x_j]=1/(1+exp(-\beta_0-\beta_1x_1-...-\beta_kx_k))$
+
+Al igual que la regresión lineal múltiples, la regresión logística consiste en obtener aquellos pesos que hagan máximo el logaritmo de la función de verosimilitud. Este método de obtención de los pesos se denomina método de máxima verosimilitud. Se pretende maximizar la siguiente ecuación para todos los individuos $i$:
+
+$\sum_{i=1}^n(1-x_i)log(1-Pr[1|x_{i1},x_{i2}, ..., x_{ik})+x_ilog(Pr[1|x_{i1},x_{i2}, ..., x_{ik})]$
+
+### Redes neuronales
+
+Este método está diseñado para simular la arquitectura del cerebro humano para crear una inteligencia artificial que permita clasificar individuos según el valor de una variable respuesta categórica. Esta arquitectura se basa en unidades procesadoras que simulan a las neuronas y conexiones entres las unidades procesadoras que tienen un peso asociado. 
+
+Una neurona artificial toma un conjunto de entradas y produce una salida de la siguiente forma. Primero calcula el valor potencial postsináptico de la neurona, generalmente con la siguiente función lineal: $net_i=\sum_{j=0}w_{ij}x_j$. A continuación aplica una función de transferencia a la suma
+ponderada de las entradas y obtiene la salida.
+
+La arquitectura de una red neuronal se basa en un conjunto de uueronas que se agrupan en lo que se denominan capas. Un conjunto de una o más capas forma la red neuronal. Existen tres tipos de capas:
+- Capa de entrada: Aquella que recibe los datos del entorno
+- Capa de salida: Aquella que proporciona la respuesta
+- Capa oculta: Aquellas capas intermedias.
+
+La fase de entrenamiento o aprendizaje de la red se trata de el proceso por el que se produce un ajuste de los parámetros libres de la red a partir de un proceso externo. El proceso de aprendizaje es generalmente iterativo, actualizándose los pesos, continuamente, hasta que la red alcance un rendimiento deseado o un número máximo de iteraciones. La red aprende examinando individuo a individuo, generando una predicción para cada uno y realizando los ajustes necesarios a los pesos cuando la predicción es incorrecta. 
+
+### Máquinas de vectores de soporte
+
+Una máquina de vectores de soporte (SVM) aprende una función de clasificación de una variable respuesta categórica de dos categorías resolviendo un problema de programación cuadrática.
+
+Una SVM es un modelo que representa a los individuos en el espacio, separando las clases de la variable respuesta a 2 espacios lo más amplios posibles mediante un hiperplano de separación definido como el vector entre los 2 puntos, de las 2 clases, más cercanos al que se llama vector soporte. Según donde se coloquen los nuevos individuos introducidos se les clasificará en una clase o en otra, es decir, según su posición respecto a los planos.
+
+El objetivo consiste en contruir un hiperplano o un conjunto de hiperplanos en un espacio de dimensionalidad alta que puedan ser utilizados como clasificadores.La manera más simple de realizar la separación es mediante una línea, plano o hiperplano recto pero debido a las limitaciones computacionales de las máquinas de aprendizaje lineal, éstas no pueden ser utilizadas en la mayoría de las aplicaciones del mundo real. La representación por medio de funciones Kernel proyecta la información a un espacio de características de mayor dimensión el cual aumenta la capacidad computacional de la máquinas de aprendizaje lineal solucionando el problema. 
+
+### Naive Bayes
+
+El método de naive bayes para clasificar una variable categórica se basa en el teorema de Bayes que establece la siguiente igualdad: $P(y/x_i, ..., x_k)=P(y)P(x_i, ..., x_k|y)/P(x_i, ..., x_k)$. Debido a la suposición de indepencia se puede simplificar de la siguiente manera: $P(y/x_i, ..., x_k)=P(y)\prod_{i=1}^kP(x_i|y)/P(x_i, ..., x_k)$
+
+Como $P(x_i, ..., x_k)$ es constante de para una entrada concreta, se usa la siguente regla de clasificación usando estimaciones a posteriori para $P(y)$ y $P(x_i/y)$: $\hat{y}=arg$ $max_yP(y)\prod_{i=1}^kP(x_i|y)$
+
+### Árboles de clasificación
+
+Un árbol de clasificación predice la clasificación de un individuo respecto a una variable respuesta según el valor de sus atributos. Estos árboles son gráficos con nodos. Al principio del árbol están presentes todos los individuos sin clasificar pero a medida que se recorre el árbol hacia abajo se van separando en dos grupos disjuntos cada vez según sus valores en determinados atributos hasta acabar todos los individuos clasificados.
+
+La división de los individuos en grupos se puede realizar según alguno de los siguientes criterios: Índice de Gini, Chi-cuadrado (CHAID), ganancia en la información o reducción de la varianza.
+
+El método para obtener un buen árbol de clasificación es obtener primero uno demasiado grande e ir podándolo, es decir, quitando ramas reduciendo así su complejidad.
+
+## Resultados
+
+### Pre-procesamiento de los datos
+
+Primero se deben cargar los datos y pre-procesarlos para que puedan ser utilizados adecuadamente en un modelo.  
+
+```{r}
+notas_m <- read.csv("student-mat.csv")
+notas_p <- read.csv("student-por.csv")
+notas_m_corr <- notas_m ## Uso posterior explicado
+notas_p_corr <- notas_p ## Uso posterior explicado
+```
+
+Antes de limpiarlos, se unen ambos archivos para realizar la limpieza de las variables únicamente en un archivo y no en dos. Para diferenciar las notas se añade a ambos archivos una columna adicional que indicará a que asignatura pertenecen los datos de esa fila. Esta variable se eliminará al terminar la limpieza del archivo al volver a separar las asignaturas.
+
+```{r}
+notas_m$asignatura<-"M"
+notas_p$asignatura<-"P"
+notas<-rbind(notas_p,notas_m)
+head(notas)
+```
+
+Se obtiene a continuación los tipos de las variables que han sido asignados automáticamente al cargar los archivos y se corrigen los que haga falta.
+
+```{r}
+sapply(notas,class)
+```
+Todas las variables excepto la edad, las ausencias y las notas deben ser factores por lo que se procede a su cambio. Además se le da nombre a los niveles que estaban representados por números y se cambia el tipo de las variables de tipo integer por el tipo numeric. 
+
+```{r}
+notas$school<-factor(notas$school)
+
+notas$sex<-factor(notas$sex)
+levels(notas$sex)<-c("mujer","hombre")
+
+notas$address<-factor(notas$address)
+levels(notas$address)<-c("Urban","Rural")
+
+notas$famsize<-factor(notas$famsize)
+
+notas$Pstatus<-factor(notas$Pstatus)
+levels(notas$Pstatus)<-c("juntos","separados")
+
+notas$Medu<-factor(notas$Medu)
+levels(notas$Medu)<-c("ninguna", "<=4ºEP", "5ºEP-3ºESO", "4ºESO-2ºBachiller", "estudios superiores")
+
+notas$Fedu<-factor(notas$Fedu)
+levels(notas$Fedu)<-c("ninguna", "<=4ºEP", "5ºEP-3ºESO", "4ºESO-2ºBachiller", "estudios superiores")
+
+notas$Mjob<-factor(notas$Mjob)
+notas$Fjob<-factor(notas$Fjob)
+notas$reason<-factor(notas$reason)
+notas$guardian<-factor(notas$guardian)
+
+notas$traveltime<-factor(notas$traveltime)
+levels(notas$traveltime)<-c("<15 min", "15-30 min", "30 min.-1 hora", ">1 hora")
+
+notas$studytime<-factor(notas$studytime)
+levels(notas$studytime)<-c("<2 horas", "2-5 horas", "5-10 horas", ">10 horas")
+
+notas$failures<-factor(notas$failures)
+levels(notas$failures)<-c("0","1","2",">=3")
+
+notas$schoolsup<-factor(notas$schoolsup)
+notas$famsup<-factor(notas$famsup)
+notas$paid<-factor(notas$paid)
+notas$activities<-factor(notas$activities)
+notas$nursery<-factor(notas$nursery)
+notas$higher<-factor(notas$higher)
+notas$internet<-factor(notas$internet)
+notas$romantic<-factor(notas$romantic)
+
+notas$famrel<-factor(notas$famrel)
+levels(notas$famrel)<-c("muy mal", "mal", "regular", "bien", "muy bien")
+
+notas$freetime<-factor(notas$freetime)
+levels(notas$freetime)<-c("nada", "poco", "algo", "suficiente", "mucho")
+
+notas$goout<-factor(notas$goout)
+levels(notas$goout)<-c("nada", "poco", "algo", "suficiente", "mucho")
+
+notas$Dalc<-factor(notas$Dalc)
+levels(notas$Dalc)<-c("nada", "poco", "algo", "suficiente", "mucho")
+
+notas$Walc<-factor(notas$Walc)
+levels(notas$Walc)<-c("nada", "poco", "algo", "suficiente", "mucho")
+
+notas$health<-factor(notas$health)
+levels(notas$health)<-c("muy mal", "mal", "regular", "bien", "muy bien")
+
+notas$asignatura<-factor(notas$asignatura)
+levels(notas$asignatura)<-c("Matemáticas","Portugués")
+
+Classes=sapply(notas,class)
+for (i in 1:ncol(notas))
+if (Classes[i]=='integer') notas[[i]]=as.numeric(notas[[i]])
+
+head(notas)
+```
+
+```{r}
+sapply(notas,class)
+```
+A continuación, se comprueba si existen valores nulos.
+
+```{r}
+sapply(notas, function(x) sum(is.na(x)))
+```
+No existen valores nulos por lo que con esto se termina la limpieza. Se procede ahora a volver a separar la matriz en dos distinguiendo por la asignatura y a eliminar la variable auxiliar asignatura. Las primeras 649 filas corresponden a la asignatura de portugués y las restantes a la asignatura de matemáticas.
+
+```{r}
+notas_p<-notas[1:649,]
+notas_m<-notas[650:1044,]
+notas_p<-notas_p[,!(names(notas) %in% "asignatura")]
+notas_m<-notas_m[,!(names(notas) %in% "asignatura")]
+```
+
+Se crea para ambas asignaturas una nueva variable que corresponda a si un alumno ha aprobado o suspendido para posteriormente también poder clasificar a los alumnos por esta variable.
+
+```{r}
+notas_p$calificacion<-ifelse(notas_p$G3 < 10, "suspenso", "aprobado")
+notas_p$calificacion<-factor(notas_p$calificacion)
+notas_m$calificacion<-ifelse(notas_m$G3 < 10, "suspenso", "aprobado")
+notas_m$calificacion<-factor(notas_m$calificacion)
+```
+
+Por último, se comprueba la distribución de G3 en ambas asignaturas para detectar si existe alguna anomalía.
+
+```{r }
+library(ggplot2)
+q1 = ggplot(notas_m, aes(x=as.factor(G3))) +
+  geom_bar(stat="count", width=0.7, fill="steelblue") + labs(x="Nota Final", title="Matemáticas")+
+  theme_minimal()
+q2 = ggplot(notas_p, aes(x=as.factor(G3))) +
+  geom_bar(stat="count", width=0.7, fill="steelblue") + labs(x="Nota Final", title="Portugués")+
+  theme_minimal()
+library(gridExtra)
+grid.arrange(q1,q2, nrow = 2, ncol=1)
+```
+La nota final, en ambas asignaturas, a simple vista sigue una distribución normal exceptuando la frequencia anómala de la nota 0 que destaca notablemente más en matemáticas que en portugués. Esto significa que hay un error ya que no debe haber tantos alumnos con un cero de nota. Esta alta frequencia del cero se puede deber a múltiples cosas: a lo mejor los valores nulos se han sustituido en la base de datos con un cero, o los no presentados también se han calificado con un cero o existe alguna explicación relacionada con el resto de variables. Se dejan a continuación algunos diagramas de dispersión para comprobar este último caso .
+
+```{r}
+grupo_m <- as.factor(ifelse(notas_m$G3 > 0, "nota final != cero", "nota final = cero"))
+grupo_p <- as.factor(ifelse(notas_p$G3 > 0, "nota final != cero", "nota final = cero"))
+q1<-qplot(G3, health, data = notas_m, colour = grupo_m) + labs(title="Matemáticas")
+q2<-qplot(G3, health, data = notas_p, colour = grupo_p) + labs(title="Portugués")
+q3<-qplot(G3, failures, data = notas_m, colour = grupo_m) + labs(title="Matemáticas")
+q4<-qplot(G3, failures, data = notas_p, colour = grupo_p) + labs(title="Portugués")
+grid.arrange(q1,q2,q3,q4, nrow = 2, ncol=2)
+```
+```{r}
+q1<-qplot(G3, famrel, data = notas_m, colour = grupo_m) + labs(title="Matemáticas")
+q2<-qplot(G3, famrel, data = notas_p, colour = grupo_p) + labs(title="Portugués")
+q3<-qplot(G3, goout, data = notas_m, colour = grupo_m) + labs(title="Matemáticas")
+q4<-qplot(G3, goout, data = notas_p, colour = grupo_p) + labs(title="Portugués")
+grid.arrange(q1,q2,q3,q4, nrow = 2, ncol=2)
+```
+Se observa como los alumnos tiene un cero de nota final están presentes en todos los grupos de las varibles sin separarse en ninguno. Por ello, para que se cumpla la normalidad de los datos se procede a eliminar los datos de estos alumnos para no tenerlos en cuenta.
+
+```{r}
+notas_m<-notas_m[notas_m$G3>0, ]
+notas_p<-notas_p[notas_p$G3>0, ]
+notas_m_corr <- notas_m_corr[notas_m_corr$G3>0, ] ## Uso posterior explicado
+notas_p_corr <- notas_p_corr[notas_p_corr$G3>0, ] ## Uso posterior explicado
+```
+
+Se comprueba por último la existencia de outliers representado el diagrama de cajas.
+
+```{r}
+p1 <- ggplot(notas_m, aes(y=G3)) +
+geom_boxplot() + labs(title="Matemáticas")
+p2 <- ggplot(notas_p, aes(y=G3)) +
+geom_boxplot() + labs(title="Portugués")
+grid.arrange(p1,p2, nrow = 1, ncol=2)
+```
+```{r}
+boxplot(notas_p$G3)$out
+```
+
+Existe un dato anómalo según el criterio elegido en la asignatura de portugués por lo que se procede a su eliminación. 
+
+```{r}
+notas_p<-notas_p[notas_p$G3!=1, ]
+```
+
+
+### Descriptiva básica y visualización de los datos
+
+Se realiza primero una descriptiva básica y una visualización del archivo de datos para conocer y familiarizarse con los datos a analizar. 
+
+La función summary proporcionará la descriptiva básica. De las variables númericas calculará el mínimo, máximo, media aritmética y los percentiles 25, 50 y 75. De las variables que son factores proporcionará las frecuencias absolutas de los distintos niveles de los factores.
+
+```{r}
+summary(notas_m)
+```
+```{r}
+summary(notas_p)
+```
+Para la visualización de los datos se utilizarán los paquetes corrplot, ggplot2, gridExtra (ya añadidaa anteriormente las dos últimas) y ggmosaic que ofrecen multitud de gráficos y posibilidades. Se plantearán distintas representaciones gráficas para las variables.
+
+```{r}
+library(corrplot)
+library(ggmosaic)
+library(cowplot)
+```
+Primero se obtiene la matriz de correlaciones entre todas las variables inicialmente númericas. Al inicio, al cargar los datos se guardaron en una matrices auxiliares los datos con las clases asignadas automáticas a las variables. En la matriz a continuación se analizará la correlación entre las variables numéricas de cada matriz correspondiente a una asignatura.
+
+```{r}
+var_numericas <- Filter(is.numeric, notas_m_corr)
+correlacion<-round(cor(var_numericas), 1)
+corrplot(correlacion, method="number", type="upper",title="Matemáticas", mar=c(0,0,1,0))
+```
+```{r}
+var_numericas <- Filter(is.numeric, notas_p_corr)
+correlacion<-round(cor(var_numericas), 1)
+corrplot(correlacion, method="number", type="upper",title="Portugués", mar=c(0,0,1,0))
+```
+Aquellas variables que presentan números de colores mas fuertes, ya sea azul o naranja, se dice que están correlacionadas. En ambas asignaturas, como es de esperar, las tres notas están altamente correlacionadas directamente. Cuando se realice el análisis de la nota final, la variable G3, se realizarán tres casos: considerando que no se tiene ninguna nota previa, considerando que solo se tienen la nota del primer trimestre, la variable G1, y finalmente considerando que se tienen las notas de los dos trimestres previos, las variables G1 y G2. En cuanto al resto de variables, se observa una baja correlación directa entre la educación del padre y la eduación de la madre, es decir, ambos padres suelen haber estudiado lo mismo; y también una baja correlación inversa entre el número de suspensos y las distintas notas, es decir, cuanto más aumenta el número de suspenso más descienden las notas.
+
+A continuación, se va a estudiar las variables nominales mediante diagramas de barras diferenciando por asignatura.
+
+```{r}
+q = ggplot(notas, aes(x=asignatura)) +
+  geom_bar(stat="count", width=0.7, fill="steelblue") +  
+  theme_minimal()
+plot(q)
+```
+
+Como ya se ha mencionado antes, se observa que el número de datos recogidos para al asignatura de matemáticas es menor que para la asignatura de portugués.  
+
+```{r}
+q1 = ggplot(notas_m, aes(x=calificacion)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Matemáticas") + 
+  theme_minimal()
+q2 = ggplot(notas_p, aes(x=calificacion)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Portugués") + 
+  theme_minimal()
+grid.arrange(q1, q2,nrow = 1, ncol=2)
+```
+La proporción de suspensos en la asignatura de matemáticas es mayor que en el asignatura de portugués.  
+
+```{r}
+g1 = ggplot(notas_m, aes(x=school)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Matemáticas") + 
+  theme_minimal()
+g2 = ggplot(notas_p, aes(x=school)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Portugués") + 
+  theme_minimal()
+g3 = ggplot(notas_m, aes(x=sex)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Matemáticas") + 
+  theme_minimal()
+g4 = ggplot(notas_p, aes(x=sex)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Portugués") + 
+  theme_minimal()
+g5 = ggplot(notas_m, aes(x=address)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Matemáticas") + 
+  theme_minimal()
+g6 = ggplot(notas_p, aes(x=address)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Portugués") + 
+  theme_minimal()
+g7 = ggplot(notas_m, aes(x=famsize)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Matemáticas") + 
+  theme_minimal()
+g8 = ggplot(notas_p, aes(x=famsize)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Portugués") + 
+  theme_minimal()
+g29 = ggplot(notas_m, aes(x=schoolsup)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Matemáticas") + 
+  theme_minimal()
+g30 = ggplot(notas_p, aes(x=schoolsup)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Portugués") + 
+  theme_minimal()
+g31 = ggplot(notas_m, aes(x=famsup)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Matemáticas") + 
+  theme_minimal()
+g32 = ggplot(notas_p, aes(x=famsup)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Portugués") + 
+  theme_minimal()
+grid.arrange(g1, g2, g3, g4, g5, g6, g7, g8, g29, g30, g31, g32, nrow = 3, ncol=4)
+```
+
+Destacar como hay notablemente más datos para el colegio Gabriel Pereira que para Mousinho da Silveira, hay ligermante más mujeres que hombre y como la mayoría de alumnos viven en un núcleo rural en vez de urbano. En cuánto al apoyo adicional, contrasta la diferencia entre el apoyo proporcionado por el colegio y por las familias. Mientras la mayoría de familias proporcionan apoyo a sus hijos el colegio no proporciona apoyo a casi ningún alumno.  
+
+```{r}
+g9 = ggplot(notas_m, aes(x=Medu)) +
+  geom_bar(stat="count", width=0.7, fill="yellow") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g10 = ggplot(notas_p, aes(x=Medu)) +
+  geom_bar(stat="count", width=0.7, fill="yellow") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g11 = ggplot(notas_m, aes(x=Fedu)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g12 = ggplot(notas_p, aes(x=Fedu)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+grid.arrange(g9, g10, g11,g12, nrow = 2, ncol=2)
+```
+Casi todos los padres y madres de los alumnos tienen algún tipo de educación.  
+
+```{r}
+g13 = ggplot(notas_m, aes(x=Mjob)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g14 = ggplot(notas_p, aes(x=Mjob)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g15 = ggplot(notas_m, aes(x=Fjob)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g16 = ggplot(notas_p, aes(x=Fjob)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g17 = ggplot(notas_m, aes(x=Pstatus)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g18 = ggplot(notas_p, aes(x=Pstatus)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g27 = ggplot(notas_m, aes(x=failures)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Matemáticas") + 
+  theme_minimal()
+g28 = ggplot(notas_p, aes(x=failures)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Portugués") + 
+  theme_minimal()
+grid.arrange(g13, g14, g15, g16, g17, g18, g27, g28, nrow = 2, ncol=4)
+```
+De entre los trabajos propuestos sin contar otro tipo de trabajo, el más populares entre los padres es el de servicios. Para las madres también es el de servicios pero también destacan el de profesora y ama de casa. Mencionar como la gran mayoría de padres y madres de los alumnos además viven separados.
+
+
+```{r}
+g19 = ggplot(notas_m, aes(x=reason)) +
+  geom_bar(stat="count", width=0.7, fill="brown") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g20 = ggplot(notas_p, aes(x=reason)) +
+  geom_bar(stat="count", width=0.7, fill="brown") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g21 = ggplot(notas_m, aes(x=guardian)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g22 = ggplot(notas_p, aes(x=guardian)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g23 = ggplot(notas_m, aes(x=traveltime)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g24 = ggplot(notas_p, aes(x=traveltime)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g25 = ggplot(notas_m, aes(x=studytime)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g26 = ggplot(notas_p, aes(x=studytime)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+grid.arrange(g21, g22, g19, g20, g25, g26, g23, g24, nrow = 2, ncol=4)
+```
+
+```{r}
+g33 = ggplot(notas_m, aes(x=paid)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Matemáticas") + 
+  theme_minimal()
+g34 = ggplot(notas_p, aes(x=paid)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Portugués") + 
+  theme_minimal()
+g35 = ggplot(notas_m, aes(x=activities)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Matemáticas") + 
+  theme_minimal()
+g36 = ggplot(notas_p, aes(x=activities)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Portugués") + 
+  theme_minimal()
+g37 = ggplot(notas_m, aes(x=nursery)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Matemáticas") + 
+  theme_minimal()
+g38 = ggplot(notas_p, aes(x=nursery)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Portugués") + 
+  theme_minimal()
+g39 = ggplot(notas_m, aes(x=higher)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Matemáticas") + 
+  theme_minimal()
+g40 = ggplot(notas_p, aes(x=higher)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Portugués") + 
+  theme_minimal()
+grid.arrange(g33, g34, g35, g36, g37, g38, g39, g40, nrow = 2, ncol=4)
+```
+Existe una notable diferencia entre las asignaturas en cuanto a las clases extras pagadas. La asignatura de matemáticas tiene una notablemente mayor proporción de alumnos que pagan clases que la asignatura de portugués.  
+  
+```{r}
+g41 = ggplot(notas_m, aes(x=internet)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Matemáticas") + 
+  theme_minimal()
+g42 = ggplot(notas_p, aes(x=internet)) +
+  geom_bar(stat="count", width=0.7, fill="blue") + labs(title="Portugués") + 
+  theme_minimal()
+g43 = ggplot(notas_m, aes(x=romantic)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Matemáticas") + 
+  theme_minimal()
+g44 = ggplot(notas_p, aes(x=romantic)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Portugués") + 
+  theme_minimal()
+g45 = ggplot(notas_m, aes(x=famrel)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g46 = ggplot(notas_p, aes(x=famrel)) +
+  geom_bar(stat="count", width=0.7, fill="red") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g47 = ggplot(notas_m, aes(x=freetime)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g48 = ggplot(notas_p, aes(x=freetime)) +
+  geom_bar(stat="count", width=0.7, fill="green") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+grid.arrange(g41, g42, g43, g44, g45, g46, g47, g48, nrow = 2, ncol=4)
+```
+
+```{r}
+g49 = ggplot(notas_m, aes(x=goout)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g50 = ggplot(notas_p, aes(x=goout)) +
+  geom_bar(stat="count", width=0.7, fill="orange") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g51 = ggplot(notas_m, aes(x=Dalc)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g52 = ggplot(notas_p, aes(x=Dalc)) +
+  geom_bar(stat="count", width=0.7, fill="purple") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g53 = ggplot(notas_m, aes(x=Walc)) +
+  geom_bar(stat="count", width=0.7, fill="yellow") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g54 = ggplot(notas_p, aes(x=Walc)) +
+  geom_bar(stat="count", width=0.7, fill="yellow") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g55 = ggplot(notas_m, aes(x=health)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Matemáticas") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+g56 = ggplot(notas_p, aes(x=health)) +
+  geom_bar(stat="count", width=0.7, fill="pink") + labs(title="Portugués") + 
+  theme_minimal() + theme(axis.text = element_text(angle = 45))
+grid.arrange(g49, g50, g51, g52, g53, g54, g55, g56, nrow = 2, ncol=4)
+```
+
+Para finalizar con las varibles nominales, se analiza visualmente su relación con la variable calificación.
+
+```{r}
+q1=ggplot(data = notas_m) +
+  geom_mosaic(aes(x = product(calificacion, school), fill=calificacion)) + labs(title='Matemáticas')
+q2=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, school), fill=calificacion)) +
+  labs(title='Portugués')
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, sex), fill=calificacion))  + labs(title='Matemáticas')
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, sex), fill=calificacion)) +
+  labs(title='Portugués')
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, address), fill=calificacion)) +
+  labs(title='Matemáticas')
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, address), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués')
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+En ambas asignaturas, el porcentaje de suspensos y aprobados no tiene diferencias notables en las distintas categorías dentro de una variable. La única pequeña diferencia que se podría destacar es que el colegio Mousinho da Silveira tiene menos aprobados que el colegio Gabriel Pereira.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, famsize), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas')
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, famsize), fill=calificacion)) + labs(title='Portugués')
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, schoolsup), fill=calificacion)) + 
+  labs(title='Matemáticas')
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, schoolsup), fill=calificacion)) +
+  labs(title='Portugués')
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, famsup), fill=calificacion)) +
+  labs(title='Matemáticas')
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, famsup), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués')
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+Al igual que en los gráficos anteriores, el porcentaje de suspensos y aprobados no tiene diferencias notables en las distintas categorías dentro de una variable. Una pequeña diferencia se observa entre los distintos niveles de la variable schoolsup en la asignatura de matemáticas: aquellos alumnos que no tienen apoyo del colegio tienen mayor proporción de aprobados. Esto a lo mejor se debe a que aquellos alumnos que si reciben apoyo del colegio son aquellos que más lo necesitan y que peor llevan la asignatura.
+
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Medu), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, Medu), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Fedu), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, Fedu), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+plot_grid(q1,q2,q3,q4,nrow = 2)
+```
+Las variables se comportan igual en ambas asignaturas al igual que en los gráficos anteriores. Sin embargo, entre los distintos niveles de estas variables se encuentran ligeras diferencias. Aquellos alumnos cuyos padres no tienen estudio han aprobado todos y para el resto de niveles la proporción de aprobados aumenta según aumenta la educación de los padres y madres. 
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Mjob), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, Mjob), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Fjob), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, Fjob), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Pstatus), fill=calificacion)) +
+  labs(title='Matemáticas')
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, Pstatus), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués')
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+Estas variables tambén se comportan igual en ambas asignaturas. La única pequeña diferencia que se podría destacar de estas variables es que aquellos alumnos cuyo padre o madre son profesores tienen mayor porcentaje de aprobados que los otros niveles de la misma variable.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, failures), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, failures), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, guardian), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, guardian), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, reason), fill=calificacion)) +
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, reason), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+Aquellos alumnos con asignaturas pasadas suspensas tienen un mayor porcentaje de suspensos en las asignaturas estudiadas. Mencionar también que aquellos alumnos cuyo tutor legal no es ni su padre ni su madre tienen un ligero mayor porcentaje de suspensos que las otras categoría y que aquellos alumnos que eligieron el colegio por su reputación tienen el porcentaje de aprobados más alto de entre las otras categorías de la variables.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, studytime), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, studytime), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, traveltime), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, traveltime), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+plot_grid(q1,q2,q3,q4, nrow = 2)
+```
+Como es evidente, la proporción de aprobados aumenta cuanto mayor es el tiempo de estudio dedicado a la asignatura pero tampoco en gran proporción. En cuanto a la variable de tiempo entre el colegio y la casa del estudiente no se destaca ninguna diferencia entre los distintos niveles.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, paid), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas')
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, paid), fill=calificacion)) + labs(title='Portugués')
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, activities), fill=calificacion)) + 
+  labs(title='Matemáticas')
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, activities), fill=calificacion)) +
+  labs(title='Portugués')
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, nursery), fill=calificacion)) +
+  labs(title='Matemáticas')
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, nursery), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués')
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+En estas variables no se observa ninguna diferencia notable.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, higher), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas')
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, higher), fill=calificacion)) + labs(title='Portugués')
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, internet), fill=calificacion)) + 
+  labs(title='Matemáticas')
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, internet), fill=calificacion)) +
+  labs(title='Portugués')
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, romantic), fill=calificacion)) +
+  labs(title='Matemáticas')
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, romantic), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués')
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+Se observa una clara diferencia entre los distintos niveles de la variable higher en ambas asignaturas: aquellos alumnos que desean continuar con su educación al terminar el instituto tienen una mayor proporción de aprobados que aquellos que no. En los niveles de las otras dos variables se nota una pequeña diferencia pero tampoco de gran importancia. Los alumnos que no están en una relación romántica presenta un ligero mayor porcentaje de aprobados, esto podría a lo mejor deberse a que al no tener que dedicarle tiempo a una relación tienen más tiempo disponible y no están tan distraidos. Y sobre la variable internet, los alumnos que tienen acceso a internet también presentan una ligera mayor proporción de aprobados que los que no. Esto podría deberse a que estos alumno con internet tienen más recursos para estudiar y así sacar mejores notas y aprobar.
+
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, famrel), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, famrel), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, freetime), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, freetime), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, goout), fill=calificacion)) +
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, goout), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+En la asignatura de matemáticas los alumnos que muy mala relación familiar son los que mayor proporción de aprobados tienen al contrario que en la asigntura de portugués. Para el resto de niveles de famrel, a medida que mejora la relación familiar mejor ligeramente la proporción de aprobados pero no de forma muy notable. Mencionar también que en amba asignaturas para la variable free time los alumnos que tienen poco tiempo libre aprueban más que los otros niveles. Y de forma similar a la variable freetime, la variable goout que indica cuanto salen los alumnos muestra como, en ambas asignaturas, el porcentaje de aprobados aumenta ligeramente cuanto menos sales a excepción de en el nivel nada.
+
+```{r}
+q1=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Dalc), 
+                                              fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q2=ggplot(data = notas_p) +
+  geom_mosaic(aes(x = product(calificacion, Dalc), fill=calificacion)) + labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q3=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, Walc), fill=calificacion)) + 
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q4=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, Walc), fill=calificacion)) +
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+q5=ggplot(data = notas_m) + geom_mosaic(aes(x = product(calificacion, health), fill=calificacion)) +
+  labs(title='Matemáticas') + theme(axis.text = element_text(angle = 45))
+q6=ggplot(data = notas_p) + geom_mosaic(aes(x = product(calificacion, health), 
+                                              fill=calificacion)) + 
+  labs(title='Portugués') + theme(axis.text = element_text(angle = 45))
+plot_grid(q1,q2,q3,q4,q5,q6, nrow = 3)
+```
+
+Por último, el porcentaje de aprobados en ambas variables dismuye a medida que aumenta el alcohol consumido. Siendo la excepción, la asignatura de matemáticas en la variable Dalc ya que aquellos alumnos que consumen bastante alcohol en un día lectivo son los que sorprendente mayor porcentaje de aprobados tienen de entre el resto de niveles de la variable. En cuánto a al estado de salud, las diferencias son mínimas.
+
+Con esto, se termina el análisis visual de las variables nominales.
+
+A continuación se grafican y estudian las variables númericas. Aquellos estudiantes cuyos padres no tienen educación han aprobado. Para las otros niveles, el porcentaje de aprobados aumenta según aumenta la educación de los padres.
+
+La nota final de la asignatura, la variable G3, se puede representar mediante un diagrama de cajas.
+
+```{r}
+p1 <- ggplot(notas_m, aes(y=G3)) +
+geom_boxplot() + labs(title="Matemáticas")
+p2 <- ggplot(notas_p, aes(y=G3)) +
+geom_boxplot() + labs(title="Portugués")
+grid.arrange(p1,p2, nrow = 1, ncol=2)
+```
+
+A continuación, realizamos, por ejemplo, varios diagramas de dispersión coloreando los resultados de acuerdo con la variable calificación para observar como se comporta esta variable respecto a las variables númericas.
+
+Diagramas de dispersión de la edad y ausencias.
+
+```{r}
+q1<-qplot(absences, age, data = notas_m, colour = calificacion) + labs(title="Matemáticas")
+q2<-qplot(absences, age, data = notas_p, colour = calificacion) + labs(title="Portugués")
+grid.arrange(q1,q2, nrow = 2, ncol=1)
+```
+
+No se observa una clara separación entre los supensos y aprobados según los valores de la edad y las ausencias. Mencionar que la mayoría alumnos están entre los 15 y 19 años como es normal en un instituto. Aquellos de mayor edad puede ser repetidores.
+
+
+Diagramas de dispersión de la nota del primer trimestre y la nota del segundo trimestre
+
+```{r}
+q1<-qplot(G1, G2, data = notas_m, colour = calificacion) + labs(title="Matemáticas")
+q2<-qplot(G1, G2, data = notas_p, colour = calificacion) + labs(title="Portugués")
+grid.arrange(q1,q2, nrow = 2, ncol=1)
+```
+Se observa una clara separación en ambas asignaturas entre los puntos de color azul, que corresponden con los supensos, y los puntos de color naranja, que corresponden con los aprobados. Aquellos que obtuvieron buenas notas en ambos trimestres aprobaron, mientras los que tuvieron malas notas suspendieron.
+
+Además, se observa, también en ambas asignaturas, que la mayoría de los alumnos obtuvieron más o menos la misma nota en el segundo trimestre que en el primer trimestre, a excepción de unos pocos que obtuvieron una mejor nota en el primer trimestre que en el segundo. 
+
+Se representan a continuación las variables numéricas según la calificación, suspenso o aprobado, mediante diagramas de cajas.
+
+```{r}
+p1 <- ggplot(notas_m, aes(x=calificacion, y=age, color=calificacion)) +
+geom_boxplot() + labs(title="Matemáticas")
+p2 <- ggplot(notas_p, aes(x=calificacion, y=age, color=calificacion)) +
+geom_boxplot() + labs(title="Portugués")
+p3 <- ggplot(notas_m, aes(x=calificacion, y=absences, color=calificacion)) +
+geom_boxplot() + labs(title="Matemáticas")
+p4 <- ggplot(notas_p, aes(x=calificacion, y=absences, color=calificacion)) +
+geom_boxplot() + labs(title="Portugués")
+grid.arrange(p1, p2, p3, p4, nrow = 2, ncol=2)
+```
+La media de edad es notablemente menor en los aprobados que en los suspensos. En el resto de estas variables se comportan igual ambos grupos.
+
+```{r}
+p5 <- ggplot(notas_m, aes(x=calificacion, y=G1, color=calificacion)) +
+geom_boxplot() + labs(title="Matemáticas")
+p6 <- ggplot(notas_p, aes(x=calificacion, y=G1, color=calificacion)) +
+geom_boxplot() + labs(title="Portugués")
+p7 <- ggplot(notas_m, aes(x=calificacion, y=G2, color=calificacion)) +
+geom_boxplot() + labs(title="Matemáticas")
+p8 <- ggplot(notas_p, aes(x=calificacion, y=G2, color=calificacion)) +
+geom_boxplot() + labs(title="Portugués")
+grid.arrange(p5, p6, p7, p8, nrow = 2, ncol=2)
+```
+
+Como ya se ha mencionado antes y al estar relacionadas G1 y G2 con G3, aquellos alumnos que finalmente aprueban se encuentran en el rango superior en G1 y G2.
+
+Se realizan a continuación varios diagramas de dispersión de la nota final frente las variables númericas de los datos (sin tener en cuenta G1 y G2) para detectar si existe alguna tendencia simple.
+
+```{r}
+p1 <- qplot(age, G3, data = notas_m) + labs(title="Matemáticas")
+p2 <- qplot(age, G3, data = notas_p) + labs(title="Portugués")
+p3 <- qplot(absences, G3, data = notas_m) + labs(title="Matemáticas")
+p4 <- qplot(absences, G3, data = notas_p) + labs(title="Portugués")
+grid.arrange(p1, p2, p3, p4, nrow = 2, ncol=2)
+```
+En cuanto a las distintas edades, no se nota ninguna diferencia notable entre ellas. Sin embargo, en la representación de G3 frente a las ausencias, se observa como aquellos alumnos que tienen de las mejores notas finales no tienen casi ausencias.
+
+Con esto se termina la descriptiva básica y visualización de los datos.
+
+### Predicción de la nota final de forma numéricamente
+
+Se realizarán a continuación los análisis considerando como se lleva haciendo las asignaturas separados. De esta forma luego también se podrá comparar los resultados obtenidos para cada una y ver que en que son similiares y en que difieren.
+
+Como ya se mencióno anteriormente, se analizará la nota final en tres escenarios distintos: considerando que no se tiene ninguna nota previa, considerando que solo se tienen la nota del primer trimestre, la variable G1, y finalmente considerando que se tienen las notas de los dos trimestres previos, las variables G1 y G2. 
+
+Se utilizarán modelos de regresión lineal múltiple.
+
+#### Escenario 1: sin G1 y G2
+
+##### Asignatura: portugués  
+
+Se pone a continuación la nota final de la asigntura de portugués en función del resto de variables exceptuando G1 y G2 mediante un modelo lineal.
+
+```{r}
+fit1 <- lm(G3 ~ ., data=notas_p[,!(names(notas_p) %in% c("G1","G2", "calificacion"))])
+summary(fit1)
+plot(fit1)
+```
+En este modelo ajustado únicamente resultan significativas para un nivel de significación del 5% las variables school (MS), sex (hombre), age, studytime (5-10 horas y >10 horas), failures (todos los niveles), schoolsup (yes), higher (si), famrel (bien y muy bien), freetime(poco), goout(poco), health(regular y muy bien) y absences. 
+
+El modelo estimado obtenido aproximando a dos decimales y teniendo únicamente en cuenta las variables significativas es:
+
+ $G3 = 4.72 - 0.63*schoolMS - 0.66*sexhombre + 0.32*age + 0.64*studytime5-10 horas + 0.83*studytime>10 horas$
+ $- 1.79*failures1 - 2.51*failures2 - 2.80*failures>=3 - 1.14*schoolsupyes + 1.63*higheryes + 1.21*famrelbien$
+ $+ 1.04*famrelmuy bien + 0.97*freetimepoco + 0.96*gooutpoco - 0.64*healthregular - 0.70*healthmuy bien - 0.07*absences$
+
+En el gráfico de residuos frente a los valores predichos por el modelo se trata de una nube de puntos aleatoria de dispersión regular. Es cierto que a la izquierda no hay tantos puntos, pero el cambio no es drástico por lo que se asume homocedasticidad. Del gráfico Normal Q-Q se puede asumir la normalidad de los residuos al aproximarse todos los puntos a la recta diagonal. Se puede considerar el modelo como válido.
+
+El coeficiente de determinación obtenido es 0.44. Este valor es bajo, más del 50% de la variabilidad de la nota final no es explicada por el modelo. Esto se puede deber a que las variables no estén altamente relacionadas con la nota final al tratarse de aspectos sociales y no sobre la eduación o inteligencia de un alumno.
+
+```{r}
+R_Cuadrado_p<-c(0.4429)
+```
+
+
+La tabla anova correspondiente a este ajuste es la siguiente:
+
+```{r}
+anova(fit1)
+```
+Ajustando ahora el modelo a solo las variables significativas quedaría lo siguiente:
+
+```{r}
+fit12 <- lm(G3 ~ school + sex + age + studytime + failures + schoolsup + higher + famrel + freetime + goout + health + absences, data=notas_p[,!(names(notas_p) %in% c("G1","G2", "calificacion"))])
+summary(fit12)
+```
+Al comparar ambos modelos mediante anova se puede comprobar su igualdad.
+
+```{r}
+anova(fit1,fit12)
+```
+No se podrían considerar equivalentes.
+
+##### Asignatura: matemáticas
+
+Realizo a continuación el mismo proceso pero para la asigntura de matemáticas.
+
+```{r}
+fit2 <- lm(G3 ~ ., data=notas_m[,!(names(notas_m) %in% c("G1","G2", "calificacion"))])
+summary(fit2)
+plot(fit2)
+```
+El modelo estimado obtenido aproximando a dos decimales y teniendo únicamente en cuenta las variables significativas es:
+
+ $G3 = 16.65 - 2.23*failures2 - 2.95*failures>=3 - 2.33*schoolsupyes - 0.69*famsupyes$
+ $- 1.53*healthregular - 1.38*healthmuy bien - 0.08*absences$
+
+El coeficiente de determinación obtenido es 0.4089, el cual también es bajo.
+
+```{r}
+R_Cuadrado_m<-c(0.4089)
+```
+
+Sin embargo, en esta asignatura a diferencia de en la de portugués pese a cumplir el supuesto de normalidad, se puede considerar que la nube de puntos del gráfico residuals vs fitted sigue un patrón al no haber casi puntos en los laterales por lo que visualmente no se podría asegurar el supuesto de homocedasticidad.
+
+El anova correspondiente es:
+```{r}
+anova(fit2)
+```
+
+Modelo ajustado únicamente a las variables significativas resultantes: 
+```{r}
+fit21 <- lm(G3 ~ studytime + failures + schoolsup + famsup + health + absences, data=notas_m[,!(names(notas_m) %in% c("G1","G2", "calificacion"))])
+summary(fit21)
+```
+Comparación de ambos modelos:
+```{r}
+anova(fit2,fit21)
+```
+Al igual que en el caso de la asignatura de portugués, los dos modelos no pueden considerarse equivalentes al resultar el contraste significativo.
+
+
+#### Escenario 2: con G1 y sin G2  
+
+En este escenario y en el siguiente existirá colinealidad al estar altamente correlacionadas las notas por lo tanto los modelos no son fiables. Sin embargo, se procederá igual.
+
+##### Asignatura: portugués
+
+Ajuste de la nota final a todas las variables exceptuando G2 y la variable creada calificación.
+
+```{r}
+fit3 <- lm(G3 ~ ., data=notas_p[,!(names(notas_p) %in% c("G2", "calificacion"))])
+summary(fit3)
+```
+Resultan significativas las siguientes variables: age, Fjob, failures, higher, freetime, health, absences y G1.
+
+El coeficiente de determinación cambia drásticamente en este escenario. Pasa de estar anteriormente, cuando no se consideraba la nota del primer trimestre, alrededor de 0.4 a estar ahora en 0.8 considerando G1. Esto se debe a que la nota final está ligada a la nota del primer trimestre al tenerla tenerla en cuenta. Además, que por lo normal, aquellos alumnos que les va bien en las pruebas intermedias también les vaya bien en el final y lo mismo con los alumnos que van mal.
+
+```{r}
+R_Cuadrado_p<-c(R_Cuadrado_p, 0.8118)
+```
+
+Ajustando ahora el modelo a solo las variables significativas quedaría lo siguiente:
+
+```{r}
+fit31 <- lm(G3 ~ age + Fjob + failures + higher + freetime +health + absences + G1, data=notas_p[,!(names(notas_p) %in% c("G2", "calificacion"))])
+summary(fit31)
+```
+Comparación de ambos modelos:
+```{r}
+anova(fit3,fit31)
+```
+En este caso ya sí se podrían considerar equivalentes el modelo completo y el modelo simplificado.
+
+##### Asignatura: matemáticas
+
+Ajuste de la nota final de matemáticas a todas las variables exceptuando G2 y la variable creada calificación.
+
+```{r}
+fit4 <- lm(G3 ~ ., data=notas_m[,!(names(notas_m) %in% c("G2", "calificacion"))])
+summary(fit4)
+```
+Resultan significativas las siguientes variables: age, Walc, health, absences y G1.
+
+El coeficiente de determinación al igual que en el caso de la asignatura de portugués incrementa drásticamente de lo que era antes pasando a 0.85.
+
+```{r}
+R_Cuadrado_m<-c(R_Cuadrado_m, 0.8492)
+```
+
+Ajustando ahora el modelo a solo las variables significativas quedaría lo siguiente:
+
+```{r}
+fit41 <- lm(G3 ~ age + Walc + health + absences + G1, data=notas_m[,!(names(notas_m) %in% c("G2", "calificacion"))])
+summary(fit41)
+```
+Comparación de ambos modelos:
+```{r}
+anova(fit4,fit41)
+```
+En este caso también ya sí se podrían considerar equivalentes el modelo completo y el modelo simplificado.
+
+
+#### Escenario 3: con G1 y G2
+
+En este escenario ya se consideran todas las variables (excepto la binaria creada por nosotros).
+
+##### Asignatura: portugués
+
+Ajuste de la nota final a todas las variables.
+
+```{r}
+fit5 <- lm(G3 ~ ., data=notas_p[,!(names(notas_p) %in% c("calificacion"))])
+summary(fit5)
+```
+Resultan significativas las siguientes variables: age, Fjob, traveltime, failures, higher, freetime, Dalc, G1 y G2.
+
+El coeficiente de determinación ya solo ha aumentado unas décimas comparado con el del segundo escenario, es decir, solo considerando G1 y no G2. Esto se puede deber a que al igual que G1 y G2 están relacionadas con G3, G1 y G2 también están relacionadas. La información extra que aporta G2 estando ya incluida en el modelo G1 es mínima.
+
+```{r}
+R_Cuadrado_p<-c(R_Cuadrado_p, 0.9116)
+```
+
+Ajustando ahora el modelo a solo las variables significativas quedaría lo siguiente:
+
+```{r}
+fit51 <- lm(G3 ~ age + Fjob + traveltime + failures + higher + freetime + Dalc + G1 + G2, data=notas_p[,!(names(notas_p) %in% c("calificacion"))])
+summary(fit51)
+```
+Comparación de ambos modelos:
+```{r}
+anova(fit5,fit51)
+```
+Se pueden considerar equivalentes el modelo completo y el modelo simplificado.
+
+##### Asignatura: matemáticas
+
+Ajuste de la nota final de matemáticas a todas las variables.
+
+```{r}
+fit6 <- lm(G3 ~ ., data=notas_m[,!(names(notas_m) %in% c("calificacion"))])
+summary(fit6)
+```
+Resultan significativas las siguientes variables: traveltime, famrel, goout, G1 y G2.
+
+El coeficiente de determinación al igual que en el caso de la asignatura de portugués aumenta ligeramente pasando a 0.95.
+
+```{r}
+R_Cuadrado_m<-c(R_Cuadrado_m, 0.9485)
+```
+
+Ajustando ahora el modelo a solo las variables significativas quedaría lo siguiente:
+
+```{r}
+fit61 <- lm(G3 ~ traveltime + famrel + goout + G1 + G2, data=notas_m[,!(names(notas_m) %in% c("calificacion"))])
+summary(fit61)
+```
+Comparación de ambos modelos:
+```{r}
+anova(fit6,fit61)
+```
+Se pueden considerar equivalentes el modelo completo y el modelo simplificado.
+
+```{r}
+R_Cuadrado<-rbind(R_Cuadrado_p, R_Cuadrado_m)
+colnames(R_Cuadrado)<-c("Sin G1 y G2", "Con G1 y sin G2", "Con G1 y G2")
+rownames(R_Cuadrado)<-c("Portugués", "Matemáticas")
+```
+
+
+### Predicción de la nota final de forma binaria (aprobado, suspenso)
+
+Se realizarán a continuación los análisis considerando también las asignaturas separadas y los tres escenarios ya mencionados.
+
+Se utilizarán distintos modelos de predicción para comparar y elegir el más adecuado.
+
+Antes de continuar, se escalan las variables númericas y se recondicionan las variables categóricas en variables ficticias.
+
+```{r}
+Classes=sapply(notas_p,class)
+for(i in 1:ncol(notas_p))
+  if(Classes[i]=='numeric')
+  notas_p[,i]=scale(notas_p[,i])
+head(notas_p)
+```
+```{r}
+Classes=sapply(notas_m,class)
+for(i in 1:ncol(notas_m))
+  if(Classes[i]=='numeric')
+  notas_m[,i]=scale(notas_m[,i])
+head(notas_m)
+```
+
+El conjunto de individuos de cada asignatura será divido a continuación en dos partes: una para entrenar el modelo que será el 70% y otra para validarlo con el 30% restante. La semilla utilizada será el número 2022. Se crearán tres conjuntos de entrenamiento y validación para cada asignatura: uno para el escenario 1 (sin G1 y G2), otro para el escenario 2 (con G1 y sin G2) y otro para el escenario 3 (con G1 y G2). En ninguno se incluirá tampoco la variable G3, correspondiente a la nota final numérica.
+
+```{r}
+tr=round(nrow(notas_p)*0.7)
+set.seed(2022)
+muestra_p=sample.int(nrow(notas_p), tr)
+Train1.notas_p=notas_p[muestra_p,!(names(notas_p) %in% c("G1","G2","G3"))]
+Val1.notas_p=notas_p[-muestra_p,!(names(notas_p) %in% c("G1","G2","G3"))]
+Train2.notas_p=notas_p[muestra_p,!(names(notas_p) %in% c("G2","G3"))]
+Val2.notas_p=notas_p[-muestra_p,!(names(notas_p) %in% c("G2","G3"))]
+Train3.notas_p=notas_p[muestra_p,!(names(notas_p) %in% c("G3"))]
+Val3.notas_p=notas_p[-muestra_p,!(names(notas_p) %in% c("G3"))]
+
+tr=round(nrow(notas_m)*0.7)
+set.seed(2022)
+muestra_m=sample.int(nrow(notas_m), tr)
+Train1.notas_m=notas_m[muestra_m,!(names(notas_m) %in% c("G1","G2","G3"))]
+Val1.notas_m=notas_m[-muestra_m,!(names(notas_m) %in% c("G1","G2","G3"))]
+Train2.notas_m=notas_m[muestra_m,!(names(notas_m) %in% c("G2","G3"))]
+Val2.notas_m=notas_m[-muestra_m,!(names(notas_m) %in% c("G2","G3"))]
+Train3.notas_m=notas_m[muestra_m,!(names(notas_m) %in% c("G3"))]
+Val3.notas_m=notas_m[-muestra_m,!(names(notas_m) %in% c("G3"))]
+```
+
+#### Escenario 1: sin G1 y G2
+
+##### Método 1: Regresión logística
+
+###### Asignatura: portugués
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit1=glm(calificacion~., data=notas_p[,!(names(notas_p) %in% c("G1","G2", "G3"))], family=binomial)
+summary(gfit1)
+```
+Resultan significativas las siguientes variables: school, age, guardian, traveltime, failures, paid, activities, higher, famrel, health y absences.
+
+Sin embargo, para el aprendizaje automático lo que interesa es la predicción.
+
+```{r}
+gfit12=glm(calificacion~., data=Train1.notas_p, family=binomial)
+cbind(gfit1$coefficients, gfit12$coefficients)
+```
+Con este modelo, predecimos los valores de calificación en la asignatura de portugués.
+```{r}
+p=predict(gfit12, Val1.notas_p, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+library(caret)
+matrizLogis<-confusionMatrix(Val1.notas_p$calificacion, PredCalificacion)
+matrizLogis
+```
+El porcentaje de clasificación correcta es del 82%.
+
+```{r}
+precision_p1<-c(matrizLogis$overall[1])
+names(precision_p1)<-c("Regresion Logistica")
+```
+
+
+Se dibuja también la curva ROC para comprobar el modelo.
+
+```{r}
+library(pROC)
+test_prob = predict(gfit12, newdata = Val1.notas_p, type = "response")
+test_roc = roc(Val1.notas_p$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0,807 que es un valor alto y por tanto confirma que el modelo es bueno.
+
+###### Asignatura: matemáticas
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit2=glm(calificacion~., data=notas_m[,!(names(notas_m) %in% c("G1","G2", "G3"))], family=binomial)
+summary(gfit2)
+```
+Resultan significativas las siguientes variables: failures, schoolsup, famsup, goout, health y absences.
+
+A continuación la predicción.
+
+```{r}
+gfit21=glm(calificacion~., data=Train1.notas_m, family=binomial)
+cbind(gfit1$coefficients, gfit21$coefficients)
+```
+Con este modelo, predecimos los valores de calificación en la asignatura de matemáticas.
+```{r}
+p=predict(gfit21, Val1.notas_m, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+library(caret)
+matrizLogis<-confusionMatrix(Val1.notas_m$calificacion, PredCalificacion)
+matrizLogis
+```
+El porcentaje de clasificación correcta es del 71%, menor que en la asignatura de portugués.
+
+```{r}
+precision_m1<-c(matrizLogis$overall[1])
+names(precision_m1)<-c("Regresion Logistica")
+```
+
+Se dibuja también la curva ROC para comprobar el modelo.
+
+```{r}
+library(pROC)
+test_prob = predict(gfit21, newdata = Val1.notas_m, type = "response")
+test_roc = roc(Val1.notas_m$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0,657. Este valor no es muy alto.
+
+##### Método 2: Redes neuronales
+
+###### Asignatura: portugués
+
+Se prueba primero con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+require(neuralnet)
+Train=data.frame(Train1.notas_p$calificacion,model.matrix(calificacion~., data=Train1.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn1)
+```
+
+```{r}
+Validate=data.frame(Val1.notas_p$calificacion,model.matrix(calificacion~., data=Val1.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val1.notas_p$calificacion, predictedNN1)
+matrizNN1
+```
+```{r}
+precisionNN_p<-c(matrizNN1$overall[1])
+```
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train1.notas_p$calificacion,model.matrix(calificacion~., data=Train1.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_p$calificacion,model.matrix(calificacion~., data=Val1.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val1.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train1.notas_p$calificacion,model.matrix(calificacion~., data=Train1.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_p$calificacion,model.matrix(calificacion~., data=Val1.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val1.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train1.notas_p$calificacion,model.matrix(calificacion~., data=Train1.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_p$calificacion,model.matrix(calificacion~., data=Val1.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val1.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+names(precisionNN_p)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas")
+precisionNN_p
+```
+El porcentaje de clasificación mediante redes neuronales de una capa es muy bajo y ni aumentando el número de neuronas se mejora. 
+
+Se prueba a continuación con una red neuronal de dos capas. 
+
+```{r}
+Train=data.frame(Train1.notas_p$calificacion,model.matrix(calificacion~., data=Train1.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn12=neuralnet(calificacion ~., data=Train, hidden=c(10,5), act.fct = "logistic", linear.output = FALSE)
+plot(nn12)
+```
+
+```{r}
+Validate=data.frame(Val1.notas_p$calificacion,model.matrix(calificacion~., data=Val1.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn12,Validate)
+predictedNN12=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN12<-confusionMatrix(Val1.notas_p$calificacion, predictedNN12)
+matrizNN12
+```
+De esta forma tampoco mejora la clasificación.
+
+```{r}
+precision_p1<-c(precision_p1, max(precisionNN_p))
+names(precision_p1)[2]<-c("Redes Neuronales")
+```
+
+###### Asignatura: Matemáticas
+
+Se prueba primero, al igual que en la asignatura de portugués, con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+Train=data.frame(Train1.notas_m$calificacion,model.matrix(calificacion~., data=Train1.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn2)
+```
+
+```{r}
+Validate=data.frame(Val1.notas_m$calificacion,model.matrix(calificacion~., data=Val1.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val1.notas_m$calificacion, predictedNN2)
+matrizNN2
+```
+```{r}
+precisionNN_m<-c(matrizNN2$overall[1])
+```
+
+El porcentaje de clasificación correcta en la asignatura de matemáticas duplica al de la asignatura de portugués y con el mismo modelo. Sin embargo, sigue siendo bastante bajo.
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train1.notas_m$calificacion,model.matrix(calificacion~., data=Train1.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_m$calificacion,model.matrix(calificacion~., data=Val1.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val1.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train1.notas_m$calificacion,model.matrix(calificacion~., data=Train1.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_m$calificacion,model.matrix(calificacion~., data=Val1.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val1.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train1.notas_m$calificacion,model.matrix(calificacion~., data=Train1.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val1.notas_m$calificacion,model.matrix(calificacion~., data=Val1.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val1.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+names(precisionNN_m)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas")
+precisionNN_m
+```
+El porcentaje de clasificación mediante redes neuronales de una capa, a pesar de ser mayor que en la asignatura de portugués, sigue siendo muy bajo y ni aumentando el número de neuronas se mejora notabemente. 
+
+Se prueba a continuación con una red neuronal de dos capas. 
+
+```{r}
+Train=data.frame(Train1.notas_m$calificacion,model.matrix(calificacion~., data=Train1.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn21=neuralnet(calificacion ~., data=Train, hidden=c(5,5), act.fct = "logistic", linear.output = FALSE)
+plot(nn21)
+```
+
+```{r}
+Validate=data.frame(Val1.notas_m$calificacion,model.matrix(calificacion~., data=Val1.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn21,Validate)
+predictedNN21=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN21<-confusionMatrix(Val1.notas_m$calificacion, predictedNN21)
+matrizNN21
+```
+Con esta estructura la red neuronal tampoco mejora. Con otras que se ha probado pero no se muestran tampoco mejoró.
+
+```{r}
+precision_m1<-c(precision_m1, max(precisionNN_m))
+names(precision_m1)[2]<-c("Redes Neuronales")
+```
+
+##### Método 3: Máquina de vector soporte
+
+###### Asignatura: portugués
+
+Se ajusta, a continuación, el modelo para los datos de la asignatura de portugués con el kernel radial.
+
+```{r}
+library(e1071)
+fitsvm11 <-svm(calificacion ~., data = Train1.notas_p)
+summary(fitsvm11)
+```
+Se predicen ahora los valores de la respuesta y se calcula la matriz de confusión.
+
+```{r}
+predictedSVM = predict(fitsvm11,Val1.notas_p)
+matrizSVM11<-confusionMatrix(Val1.notas_p$calificacion, predictedSVM)
+matrizSVM11
+```
+
+```{r}
+precisionSVM_p<-c(matrizSVM11$overall[1])
+names(precisionSVM_p)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm12 <-svm(calificacion ~., data = Train1.notas_p, kernel="polynomial")
+summary(fitsvm12)
+```
+```{r}
+predictedSVM = predict(fitsvm12,Val1.notas_p)
+matrizSVM12<-confusionMatrix(Val1.notas_p$calificacion, predictedSVM)
+matrizSVM12
+```
+
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM12$overall[1])
+names(precisionSVM_p)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm13 <-svm(calificacion ~., data = Train1.notas_p, kernel="sigmoid")
+summary(fitsvm13)
+```
+
+```{r}
+predictedSVM = predict(fitsvm13,Val1.notas_p)
+matrizSVM13<-confusionMatrix(Val1.notas_p$calificacion, predictedSVM)
+matrizSVM13
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM13$overall[1])
+names(precisionSVM_p)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm14 <-svm(calificacion ~., data = Train1.notas_p, kernel="linear")
+summary(fitsvm14)
+```
+
+```{r}
+predictedSVM = predict(fitsvm14,Val1.notas_p)
+matrizSVM14<-confusionMatrix(Val1.notas_p$calificacion, predictedSVM)
+matrizSVM14
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM14$overall[1])
+names(precisionSVM_p)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenidos de los distintos kernel.
+
+```{r}
+precisionSVM_p
+```
+La predicción de los SVM de kernel radial, polinomial y sigmoidal es la misma, la cual es ligeramente mayor que la del SVM de kernel lineal. 
+
+```{r}
+precision_p1<-c(precision_p1, max(precisionSVM_p))
+names(precision_p1)[3]<-c("SVM")
+```
+
+
+###### Asignatura: matemáticas
+
+Se prueba primero con el kernel radial.
+
+```{r}
+fitsvm21 <-svm(calificacion ~., data = Train1.notas_m)
+predictedSVM = predict(fitsvm21,Val1.notas_m)
+matrizSVM21<-confusionMatrix(Val1.notas_m$calificacion, predictedSVM)
+matrizSVM21
+```
+
+```{r}
+precisionSVM_m<-c(matrizSVM21$overall[1])
+names(precisionSVM_m)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm22 <-svm(calificacion ~., data = Train1.notas_m, kernel="polynomial")
+predictedSVM = predict(fitsvm22,Val1.notas_m)
+matrizSVM22<-confusionMatrix(Val1.notas_m$calificacion, predictedSVM)
+matrizSVM22
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM22$overall[1])
+names(precisionSVM_m)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm23 <-svm(calificacion ~., data = Train1.notas_m, kernel="sigmoid")
+predictedSVM = predict(fitsvm23,Val1.notas_m)
+matrizSVM23<-confusionMatrix(Val1.notas_m$calificacion, predictedSVM)
+matrizSVM23
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM23$overall[1])
+names(precisionSVM_m)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm24 <-svm(calificacion ~., data = Train1.notas_m, kernel="linear")
+predictedSVM = predict(fitsvm24,Val1.notas_m)
+matrizSVM24<-confusionMatrix(Val1.notas_m$calificacion, predictedSVM)
+matrizSVM24
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM24$overall[1])
+names(precisionSVM_m)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenid os de los distintos kernel.
+
+```{r}
+precisionSVM_m
+```
+Al igual que en la asignatura de portugués, la predicción de los SVM de kernel radial, polinomial y sigmoidal es la misma. sin embargo, en este caso la predicción del SVM de kernel lineal es ligeramente mayor que las otras. 
+
+```{r}
+precision_m1<-c(precision_m1, max(precisionSVM_m))
+names(precision_m1)[3]<-c("SVM")
+```
+
+##### Método 4: Naive Bayes
+
+###### Asignatura: portugués
+
+```{r}
+fitbayes1 <-naiveBayes(calificacion ~., data = Train1.notas_p)
+predictedBayes= predict(fitbayes1,Val1.notas_p)
+matrizNB1<-confusionMatrix(Val1.notas_p$calificacion, predictedBayes)
+matrizNB1
+```
+```{r}
+precision_p1<-c(precision_p1, matrizNB1$overall[1])
+names(precision_p1)[4]<-c("Naive Bayes")
+```
+
+###### Asignatura: matemáticas
+
+```{r}
+fitbayes2 <-naiveBayes(calificacion ~., data = Train1.notas_m)
+predictedBayes= predict(fitbayes2,Val1.notas_m)
+matrizNB2<-confusionMatrix(Val1.notas_m$calificacion, predictedBayes)
+matrizNB2
+```
+
+```{r}
+precision_m1<-c(precision_m1, matrizNB2$overall[1])
+names(precision_m1)[4]<-c("Naive Bayes")
+```
+
+##### Método 5: Árboles de clasificación
+
+###### Asignatura: portugués
+
+```{r}
+require(tree)
+tree11 = tree(calificacion~., data = Train1.notas_p)
+summary(tree11)
+```
+```{r}
+plot(tree11)
+text(tree11, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree11, Val1.notas_p, type="class")
+matriztree11<-confusionMatrix(Val1.notas_p$calificacion, predicedtree)
+matriztree11
+
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree11 = cv.tree(tree11, FUN = prune.misclass)
+plot(cv.tree11)
+```
+
+Se observa como al aumentar el tamaño del árbol, el porcentaje de error aumenta debido a un posible sobre ajuste. Por ello, se elige que tenga 5 ramas.
+
+```{r}
+prune.tree11 = prune.misclass(tree11, best = 5)
+plot(prune.tree11)
+text(prune.tree11, pretty=0)
+```
+
+Se observa que las ramas corresponden a los suspensos, la salud, la razón de elección del colegio y las ausencias.
+
+```{r}
+predicedtree12 = predict(prune.tree11, Val1.notas_p, type="class")
+matriztree12<-confusionMatrix(Val1.notas_p$calificacion, predicedtree12)
+matriztree12
+```
+```{r}
+precision_p1<-c(precision_p1, matriztree12$overall[1])
+names(precision_p1)[5]<-c("Arbol de clasificación")
+```
+
+###### Asignatura: matemáticas
+
+```{r}
+tree21 = tree(calificacion~., data = Train1.notas_m)
+summary(tree21)
+```
+```{r}
+plot(tree21)
+text(tree21, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree21, Val1.notas_m, type="class")
+matriztree21<-confusionMatrix(Val1.notas_m$calificacion, predicedtree)
+matriztree21
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree21 = cv.tree(tree21, FUN = prune.misclass)
+plot(cv.tree21)
+```
+
+Se observa como al aumentar el tamaño del árbol, el porcentaje de error aumenta debido a un posible sobre ajuste. Por ello, se elige que tenga 5 ramas.
+
+```{r}
+prune.tree21 = prune.misclass(tree21, best = 5)
+plot(prune.tree21)
+text(prune.tree21, pretty=0)
+```
+
+Se observa que las ramas corresponden a los suspensos, el apoyo del colegio, el tiempo libre, la relación con la familia y la educación del padre. Variables totalmente distinta a excepción de los suspensos a las de la asignatura de portugués.
+
+```{r}
+predicedtree22 = predict(prune.tree21, Val1.notas_m, type="class")
+matriztree22<-confusionMatrix(Val1.notas_m$calificacion, predicedtree22)
+matriztree22
+```
+```{r}
+precision_m1<-c(precision_m1, matriztree22$overall[1])
+names(precision_m1)[5]<-c("Arbol de clasificación")
+```
+
+#### Escenario 2: con G1 y sin G2
+
+##### Método 1: Regresión logística
+
+###### Asignatura: portugués
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit1=glm(calificacion~., data=notas_p[,!(names(notas_p) %in% c("G2", "G3"))], family=binomial)
+summary(gfit1)
+```
+Resultan significativas las siguientes variables: age, traveltime, failures, higher, famrel y ,especialmente significativa como era de esperar, G1.
+
+Sin embargo, lo que interesa es la predicción.
+
+```{r}
+gfit12=glm(calificacion~., data=Train2.notas_p, family=binomial)
+cbind(gfit1$coefficients, gfit12$coefficients)
+```
+```{r}
+p=predict(gfit12, Val2.notas_p, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+matrizLogis<-confusionMatrix(Val2.notas_p$calificacion, PredCalificacion)
+matrizLogis
+```
+El porcentaje de clasificación correcta es del 88%.
+
+```{r}
+precision_p2<-c(matrizLogis$overall[1])
+names(precision_p2)<-c("Regresion Logistica")
+```
+
+Se dibuja también la curva ROC.
+
+```{r}
+test_prob = predict(gfit12, newdata = Val2.notas_p, type = "response")
+test_roc = roc(Val2.notas_p$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0,886 que es un valor alto y por tanto confirma que el modelo es bueno.
+
+###### Asignatura: matemáticas
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit2=glm(calificacion~., data=notas_m[,!(names(notas_m) %in% c("G2", "G3"))], family=binomial)
+summary(gfit2)
+```
+Resultan significativas las siguientes variables: age, address, goout, walc, absences y G1. Comparando con el anterior escenario, únicamente goout y absences se mantienen significativas, el resto son nuevas.
+
+A continuación la predicción.
+
+```{r}
+gfit21=glm(calificacion~., data=Train2.notas_m, family=binomial)
+cbind(gfit1$coefficients, gfit21$coefficients)
+```
+Con este modelo, predecimos los valores de calificación en la asignatura de matemáticas.
+```{r}
+p=predict(gfit21, Val2.notas_m, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+matrizLogis<-confusionMatrix(Val2.notas_m$calificacion, PredCalificacion)
+matrizLogis
+```
+```{r}
+precision_m2<-c(matrizLogis$overall[1])
+names(precision_m2)<-c("Regresion Logistica")
+```
+
+Se dibuja también la curva ROC para comprobar el modelo.
+
+```{r}
+test_prob = predict(gfit21, newdata = Val2.notas_m, type = "response")
+test_roc = roc(Val2.notas_m$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0.701, la cual es ligeramente mayor que en el anterior escenario pero aun así sigue siendo un valor no muy alto.
+
+##### Método 2: Redes neuronales
+
+###### Asignatura: portugués
+
+Se prueba primero con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+Train=data.frame(Train2.notas_p$calificacion,model.matrix(calificacion~., data=Train2.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn1)
+```
+
+```{r}
+Validate=data.frame(Val2.notas_p$calificacion,model.matrix(calificacion~., data=Val2.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val2.notas_p$calificacion, predictedNN1)
+matrizNN1
+```
+```{r}
+precisionNN_p<-c(matrizNN1$overall[1])
+```
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train2.notas_p$calificacion,model.matrix(calificacion~., data=Train2.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_p$calificacion,model.matrix(calificacion~., data=Val2.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val2.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train2.notas_p$calificacion,model.matrix(calificacion~., data=Train2.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_p$calificacion,model.matrix(calificacion~., data=Val2.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val2.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train2.notas_p$calificacion,model.matrix(calificacion~., data=Train2.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_p$calificacion,model.matrix(calificacion~., data=Val2.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val2.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+names(precisionNN_p)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas")
+precisionNN_p
+```
+El porcentaje de clasificación mediante redes neuronales de una capa es muy bajo y ni aumentando el número de neuronas se mejora notablemente. Por ahora la mejor estructura es con 10 neuronas. 
+
+Se prueba a continuación con una red neuronal de dos capas. 
+
+```{r}
+Train=data.frame(Train2.notas_p$calificacion,model.matrix(calificacion~., data=Train2.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn12=neuralnet(calificacion ~., data=Train, hidden=c(10,5), act.fct = "logistic", linear.output = FALSE)
+plot(nn12)
+```
+
+```{r}
+Validate=data.frame(Val2.notas_p$calificacion,model.matrix(calificacion~., data=Val2.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn12,Validate)
+predictedNN12=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN12<-confusionMatrix(Val2.notas_p$calificacion, predictedNN12)
+matrizNN12
+```
+De esta forma tampoco mejora la clasificación.
+
+```{r}
+precision_p2<-c(precision_p2, max(precisionNN_p))
+names(precision_p2)[2]<-c("Redes Neuronales")
+```
+
+###### Asignatura: Matemáticas
+
+Se prueba primero con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+Train=data.frame(Train2.notas_m$calificacion,model.matrix(calificacion~., data=Train2.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn2)
+```
+
+```{r}
+Validate=data.frame(Val2.notas_m$calificacion,model.matrix(calificacion~., data=Val2.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val2.notas_m$calificacion, predictedNN2)
+matrizNN2
+```
+```{r}
+precisionNN_m<-c(matrizNN2$overall[1])
+```
+
+El porcentaje de clasificación correcta en la asignatura de matemáticas duplica al de la asignatura de portugués y con el mismo modelo al igual que en el escenario anterior. Sin embargo, sigue siendo bastante bajo.
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train2.notas_m$calificacion,model.matrix(calificacion~., data=Train2.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_m$calificacion,model.matrix(calificacion~., data=Val2.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val2.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train2.notas_m$calificacion,model.matrix(calificacion~., data=Train2.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_m$calificacion,model.matrix(calificacion~., data=Val2.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val2.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train2.notas_m$calificacion,model.matrix(calificacion~., data=Train2.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val2.notas_m$calificacion,model.matrix(calificacion~., data=Val2.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val2.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+names(precisionNN_m)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas")
+precisionNN_m
+```
+El porcentaje de clasificación mediante redes neuronales de una capa, a pesar de ser mayor que en la asignatura de portugués, sigue siendo muy bajo y ni aumentando el número de neuronas se mejora notablemente. 
+
+Se prueba a continuación con una red neuronal de dos capas. 
+
+```{r}
+Train=data.frame(Train2.notas_m$calificacion,model.matrix(calificacion~., data=Train2.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn21=neuralnet(calificacion ~., data=Train, hidden=c(5,5), act.fct = "logistic", linear.output = FALSE)
+plot(nn21)
+```
+
+```{r}
+Validate=data.frame(Val2.notas_m$calificacion,model.matrix(calificacion~., data=Val2.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn21,Validate)
+predictedNN21=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN21<-confusionMatrix(Val2.notas_m$calificacion, predictedNN21)
+matrizNN21
+```
+Con esta estructura la red neuronal tampoco mejora. Con otras que se ha probado pero no se muestran tampoco mejoró.
+
+```{r}
+precision_m2<-c(precision_m2, max(precisionNN_m))
+names(precision_m2)[2]<-c("Redes Neuronales")
+```
+
+##### Método 3: Máquina de vector soporte
+
+###### Asignatura: portugués
+
+Se ajusta, a continuación, el modelo para los datos de la asignatura de portugués con el kernel radial.
+
+```{r}
+fitsvm11 <-svm(calificacion ~., data = Train2.notas_p)
+summary(fitsvm11)
+```
+
+```{r}
+predictedSVM = predict(fitsvm11,Val2.notas_p)
+matrizSVM11<-confusionMatrix(Val2.notas_p$calificacion, predictedSVM)
+matrizSVM11
+```
+
+```{r}
+precisionSVM_p<-c(matrizSVM11$overall[1])
+names(precisionSVM_p)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm12 <-svm(calificacion ~., data = Train2.notas_p, kernel="polynomial")
+summary(fitsvm12)
+```
+```{r}
+predictedSVM = predict(fitsvm12,Val2.notas_p)
+matrizSVM12<-confusionMatrix(Val2.notas_p$calificacion, predictedSVM)
+matrizSVM12
+```
+
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM12$overall[1])
+names(precisionSVM_p)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm13 <-svm(calificacion ~., data = Train2.notas_p, kernel="sigmoid")
+summary(fitsvm13)
+```
+
+```{r}
+predictedSVM = predict(fitsvm13,Val2.notas_p)
+matrizSVM13<-confusionMatrix(Val2.notas_p$calificacion, predictedSVM)
+matrizSVM13
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM13$overall[1])
+names(precisionSVM_p)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm14 <-svm(calificacion ~., data = Train2.notas_p, kernel="linear")
+summary(fitsvm14)
+```
+
+```{r}
+predictedSVM = predict(fitsvm14,Val2.notas_p)
+matrizSVM14<-confusionMatrix(Val2.notas_p$calificacion, predictedSVM)
+matrizSVM14
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM14$overall[1])
+names(precisionSVM_p)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenidos de los distintos kernel.
+
+```{r}
+precisionSVM_p
+```
+La predicción de los SVM de kernel polinomial y sigmoidal es la misma. La clasificación de estos kernels es la peor de los cuatros. La mejor es la del kernel lineal. 
+
+```{r}
+precision_p2<-c(precision_p2, max(precisionSVM_p))
+names(precision_p2)[3]<-c("SVM")
+```
+
+
+###### Asignatura: matemáticas
+
+Se prueba primero con el kernel radial.
+
+```{r}
+fitsvm21 <-svm(calificacion ~., data = Train2.notas_m)
+predictedSVM = predict(fitsvm21,Val2.notas_m)
+matrizSVM21<-confusionMatrix(Val2.notas_m$calificacion, predictedSVM)
+matrizSVM21
+```
+
+```{r}
+precisionSVM_m<-c(matrizSVM21$overall[1])
+names(precisionSVM_m)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm22 <-svm(calificacion ~., data = Train2.notas_m, kernel="polynomial")
+predictedSVM = predict(fitsvm22,Val2.notas_m)
+matrizSVM22<-confusionMatrix(Val2.notas_m$calificacion, predictedSVM)
+matrizSVM22
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM22$overall[1])
+names(precisionSVM_m)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm23 <-svm(calificacion ~., data = Train2.notas_m, kernel="sigmoid")
+predictedSVM = predict(fitsvm23,Val2.notas_m)
+matrizSVM23<-confusionMatrix(Val2.notas_m$calificacion, predictedSVM)
+matrizSVM23
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM23$overall[1])
+names(precisionSVM_m)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm24 <-svm(calificacion ~., data = Train2.notas_m, kernel="linear")
+predictedSVM = predict(fitsvm24,Val2.notas_m)
+matrizSVM24<-confusionMatrix(Val2.notas_m$calificacion, predictedSVM)
+matrizSVM24
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM24$overall[1])
+names(precisionSVM_m)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenidos de los distintos kernel.
+
+```{r}
+precisionSVM_m
+```
+La mejor clasificación es la del kernel lineal, seguida por la del kernel radial, luego el sigmoidal y por último el polinomial. 
+
+```{r}
+precision_m2<-c(precision_m2, max(precisionSVM_m))
+names(precision_m2)[3]<-c("SVM")
+```
+
+##### Método 4: Naive Bayes
+
+###### Asignatura: portugués
+
+```{r}
+fitbayes1 <-naiveBayes(calificacion ~., data = Train2.notas_p)
+predictedBayes= predict(fitbayes1,Val2.notas_p)
+matrizNB1<-confusionMatrix(Val2.notas_p$calificacion, predictedBayes)
+matrizNB1
+```
+```{r}
+precision_p2<-c(precision_p2, matrizNB1$overall[1])
+names(precision_p2)[4]<-c("Naive Bayes")
+```
+
+###### Asignatura: matemáticas
+
+```{r}
+fitbayes2 <-naiveBayes(calificacion ~., data = Train2.notas_m)
+predictedBayes= predict(fitbayes2,Val2.notas_m)
+matrizNB2<-confusionMatrix(Val2.notas_m$calificacion, predictedBayes)
+matrizNB2
+```
+
+```{r}
+precision_m2<-c(precision_m2, matrizNB2$overall[1])
+names(precision_m2)[4]<-c("Naive Bayes")
+```
+
+##### Método 5: Árboles de clasificación
+
+###### Asignatura: portugués
+
+```{r}
+require(tree)
+tree11 = tree(calificacion~., data = Train2.notas_p)
+summary(tree11)
+```
+```{r}
+plot(tree11)
+text(tree11, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree11, Val2.notas_p, type="class")
+matriztree11<-confusionMatrix(Val2.notas_p$calificacion, predicedtree)
+matriztree11
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree11 = cv.tree(tree11, FUN = prune.misclass)
+plot(cv.tree11)
+```
+
+Se observa como o al tener muy pocas ramas o al aumentar el tamaño del árbol a más de cinco el error aumenta. Por ello, se elige que tenga 5 ramas.
+
+```{r}
+prune.tree11 = prune.misclass(tree11, best = 5)
+plot(prune.tree11)
+text(prune.tree11, pretty=0)
+```
+
+Se observa que las ramas corresponden a las variables: G1, traveltime y famrel.
+
+```{r}
+predicedtree12 = predict(prune.tree11, Val2.notas_p, type="class")
+matriztree12<-confusionMatrix(Val2.notas_p$calificacion, predicedtree12)
+matriztree12
+```
+```{r}
+precision_p2<-c(precision_p2, matriztree12$overall[1])
+names(precision_p2)[5]<-c("Arbol de clasificación")
+```
+
+
+###### Asignatura: matemáticas
+
+```{r}
+tree21 = tree(calificacion~., data = Train2.notas_m)
+summary(tree21)
+```
+```{r}
+plot(tree21)
+text(tree21, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree21, Val2.notas_m, type="class")
+matriztree21<-confusionMatrix(Val2.notas_m$calificacion, predicedtree)
+matriztree21
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree21 = cv.tree(tree21, FUN = prune.misclass)
+plot(cv.tree21)
+```
+
+Se observa como al tener muy pocas ramas, el porcentaje de error aumenta. Se elige que tenga 5 ramas que es el número de ramas con menor errores y a partir del cual el error vuelve a crecer.
+
+```{r}
+prune.tree21 = prune.misclass(tree21, best = 5)
+plot(prune.tree21)
+text(prune.tree21, pretty=0)
+```
+
+Se observa que las ramas corresponden a G1, guardian y absences.
+
+```{r}
+predicedtree22 = predict(prune.tree21, Val2.notas_m, type="class")
+matriztree22<-confusionMatrix(Val2.notas_m$calificacion, predicedtree22)
+matriztree22
+```
+```{r}
+precision_m2<-c(precision_m2, matriztree22$overall[1])
+names(precision_m2)[5]<-c("Arbol de clasificación")
+```
+
+#### Escenario 3: con G1 y con G2
+
+##### Método 1: Regresión logística  
+
+###### Asignatura: portugués  
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit1=glm(calificacion~., data=notas_p[,!(names(notas_p) %in% c("G3"))], family=binomial)
+summary(gfit1)
+```
+Resultan significativas las siguientes variables: traveltime, paid, famrel y, especialmente significativas como era de esperar, G1 y G2.
+
+Sin embargo, lo que interesa es la predicción.
+
+```{r}
+gfit12=glm(calificacion~., data=Train3.notas_p, family=binomial)
+cbind(gfit1$coefficients, gfit12$coefficients)
+```
+Los coeficientes cambian drásticamente.
+
+```{r}
+p=predict(gfit12, Val3.notas_p, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+matrizLogis<-confusionMatrix(Val3.notas_p$calificacion, PredCalificacion)
+matrizLogis
+```
+El porcentaje de clasificación correcta es del 89%.
+
+```{r}
+precision_p3<-c(matrizLogis$overall[1])
+names(precision_p3)<-c("Regresion Logistica")
+```
+
+Se dibuja también la curva ROC.
+
+```{r}
+test_prob = predict(gfit12, newdata = Val3.notas_p, type = "response")
+test_roc = roc(Val3.notas_p$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0,813, ligeramente menor que en el escenario anterior, pero que es un valor alto y por tanto confirma que el modelo es bueno.
+
+###### Asignatura: matemáticas
+
+Primero se ajusta al modelo completo.
+
+```{r}
+gfit2=glm(calificacion~., data=notas_m[,!(names(notas_m) %in% c("G3"))], family=binomial)
+summary(gfit2)
+```
+El modelo no resulta válido. Puede haber afectado la colinealidad entre las notas: G1, G2 y G3.
+
+A continuación la predicción.
+
+```{r}
+gfit21=glm(calificacion~., data=Train3.notas_m, family=binomial)
+cbind(gfit1$coefficients, gfit21$coefficients)
+```
+Con este modelo, predecimos los valores de calificación en la asignatura de matemáticas.
+```{r}
+p=predict(gfit21, Val3.notas_m, type="response")
+PredCalificacion=as.factor(p>0.5)
+levels(PredCalificacion)=c("aprobado", "suspenso")
+matrizLogis<-confusionMatrix(Val3.notas_m$calificacion, PredCalificacion)
+matrizLogis
+```
+```{r}
+precision_m3<-c(matrizLogis$overall[1])
+names(precision_m3)<-c("Regresion Logistica")
+```
+
+Se dibuja también la curva ROC para comprobar el modelo.
+
+```{r}
+test_prob = predict(gfit21, newdata = Val3.notas_m, type = "response")
+test_roc = roc(Val3.notas_m$calificacion ~ test_prob, plot = TRUE, print.auc = TRUE)
+```
+El área bajo la curva es de 0.86, la cual es mayor que en el anterior escenario, siendo ya un valor notablemente alto.
+
+##### Método 2: Redes neuronales
+
+###### Asignatura: portugués
+
+Se prueba primero con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+Train=data.frame(Train3.notas_p$calificacion,model.matrix(calificacion~., data=Train3.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn1)
+```
+
+```{r}
+Validate=data.frame(Val3.notas_p$calificacion,model.matrix(calificacion~., data=Val3.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val3.notas_p$calificacion, predictedNN1)
+matrizNN1
+```
+```{r}
+precisionNN_p<-c(matrizNN1$overall[1])
+```
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train3.notas_p$calificacion,model.matrix(calificacion~., data=Train3.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_p$calificacion,model.matrix(calificacion~., data=Val3.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val3.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train3.notas_p$calificacion,model.matrix(calificacion~., data=Train3.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_p$calificacion,model.matrix(calificacion~., data=Val3.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val3.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+Train=data.frame(Train3.notas_p$calificacion,model.matrix(calificacion~., data=Train3.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn1=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_p$calificacion,model.matrix(calificacion~., data=Val3.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn1,Validate)
+predictedNN1=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN1<-confusionMatrix(Val3.notas_p$calificacion, predictedNN1)
+precisionNN_p<-c(precisionNN_p, matrizNN1$overall[1])
+names(precisionNN_p)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas")
+precisionNN_p
+```
+El porcentaje de clasificación mediante redes neuronales de una capa es muy bajo y ni aumentando el número de neuronas se mejora.. 
+
+Se prueba a continuación con una red neuronal de dos capas. 
+
+```{r}
+Train=data.frame(Train3.notas_p$calificacion,model.matrix(calificacion~., data=Train3.notas_p)[,-1])
+colnames(Train)[1]="calificacion"
+nn12=neuralnet(calificacion ~., data=Train, hidden=c(5,3), act.fct = "logistic", linear.output = FALSE)
+plot(nn12)
+```
+
+```{r}
+Validate=data.frame(Val3.notas_p$calificacion,model.matrix(calificacion~., data=Val3.notas_p)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn12,Validate)
+predictedNN12=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN12<-confusionMatrix(Val3.notas_p$calificacion, predictedNN12)
+matrizNN12
+```
+De esta forma tampoco mejora la clasificación.
+
+```{r}
+precision_p3<-c(precision_p3, max(precisionNN_p))
+names(precision_p3)[2]<-c("Redes Neuronales")
+```
+
+###### Asignatura: Matemáticas
+
+Se prueba primero con una red neuronal de una capa y cinco neuronas.
+
+```{r}
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=5, act.fct = "logistic", linear.output = FALSE)
+plot(nn2)
+```
+
+```{r}
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val3.notas_m$calificacion, predictedNN2)
+matrizNN2
+```
+```{r}
+precisionNN_m<-c(matrizNN2$overall[1])
+```
+
+El porcentaje de clasificación correcta en la asignatura de matemáticas casi duplica al de la asignatura de portugués y con el mismo modelo al igual que en el escenario anterior. Sin embargo, sigue siendo bastante bajo.
+
+Se prueba a continuación con distinto número de neuronas.
+
+```{r}
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=10, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val3.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=15, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val3.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=20, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val3.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn2=neuralnet(calificacion ~., data=Train, hidden=30, act.fct = "logistic", linear.output = FALSE)
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn2,Validate)
+predictedNN2=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN2<-confusionMatrix(Val3.notas_m$calificacion, predictedNN2)
+precisionNN_m<-c(precisionNN_m, matrizNN2$overall[1])
+names(precisionNN_m)<-c("5 neuronas", "10 neuronas", "15 neuronas", "20 neuronas","30 neuronas")
+precisionNN_m
+```
+El porcentaje de clasificación mediante redes neuronales de una capa, a pesar de ser mayor que en la asignatura de portugués, sigue siendo muy bajo y ni aumentando el número de neuronas se mejora notablemente, solo mejor ligeramente con 20 neuronas. 
+
+Se prueba a continuación con una red neuronal de dos capas y cinco neuronas cada una. 
+
+```{r}
+Train=data.frame(Train3.notas_m$calificacion,model.matrix(calificacion~., data=Train3.notas_m)[,-1])
+colnames(Train)[1]="calificacion"
+nn21=neuralnet(calificacion ~., data=Train, hidden=c(5,5), act.fct = "logistic", linear.output = FALSE)
+plot(nn21)
+```
+
+```{r}
+Validate=data.frame(Val3.notas_m$calificacion,model.matrix(calificacion~., data=Val3.notas_m)[,-1])
+colnames(Validate)[1]="calificacion"
+Predict=compute(nn21,Validate)
+predictedNN21=factor(Predict$net.result[,1]>0.5, labels = c("aprobado", "suspenso"))
+matrizNN21<-confusionMatrix(Val3.notas_m$calificacion, predictedNN21)
+matrizNN21
+```
+Con esta estructura la red neuronal tampoco mejora. Con otras que se ha probado pero no se muestran tampoco mejoró.
+
+```{r}
+precision_m3<-c(precision_m3, max(precisionNN_m))
+names(precision_m3)[2]<-c("Redes Neuronales")
+```
+
+##### Método 3: Máquina de vector soporte
+
+###### Asignatura: portugués
+
+Se ajusta, a continuación, el modelo para los datos de la asignatura de portugués con el kernel radial.
+
+```{r}
+fitsvm11 <-svm(calificacion ~., data = Train3.notas_p)
+summary(fitsvm11)
+```
+
+```{r}
+predictedSVM = predict(fitsvm11,Val3.notas_p)
+matrizSVM11<-confusionMatrix(Val3.notas_p$calificacion, predictedSVM)
+matrizSVM11
+```
+
+```{r}
+precisionSVM_p<-c(matrizSVM11$overall[1])
+names(precisionSVM_p)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm12 <-svm(calificacion ~., data = Train3.notas_p, kernel="polynomial")
+summary(fitsvm12)
+```
+```{r}
+predictedSVM = predict(fitsvm12,Val3.notas_p)
+matrizSVM12<-confusionMatrix(Val3.notas_p$calificacion, predictedSVM)
+matrizSVM12
+```
+
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM12$overall[1])
+names(precisionSVM_p)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm13 <-svm(calificacion ~., data = Train3.notas_p, kernel="sigmoid")
+summary(fitsvm13)
+```
+
+```{r}
+predictedSVM = predict(fitsvm13,Val3.notas_p)
+matrizSVM13<-confusionMatrix(Val3.notas_p$calificacion, predictedSVM)
+matrizSVM13
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM13$overall[1])
+names(precisionSVM_p)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm14 <-svm(calificacion ~., data = Train3.notas_p, kernel="linear")
+summary(fitsvm14)
+```
+
+```{r}
+predictedSVM = predict(fitsvm14,Val3.notas_p)
+matrizSVM14<-confusionMatrix(Val3.notas_p$calificacion, predictedSVM)
+matrizSVM14
+```
+```{r}
+precisionSVM_p<-c(precisionSVM_p, matrizSVM14$overall[1])
+names(precisionSVM_p)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenidos de los distintos kernel.
+
+```{r}
+precisionSVM_p
+```
+La predicción de los SVM de kernel radial y lineal es la misma. La clasificación de estos kernels es la mejor de los cuatros. La peor es el SVM de kernel polinomial.
+
+```{r}
+precision_p3<-c(precision_p3, max(precisionSVM_p))
+names(precision_p3)[3]<-c("SVM")
+```
+
+
+###### Asignatura: matemáticas
+
+Se prueba primero con el kernel radial.
+
+```{r}
+fitsvm21 <-svm(calificacion ~., data = Train3.notas_m)
+predictedSVM = predict(fitsvm21,Val3.notas_m)
+matrizSVM21<-confusionMatrix(Val3.notas_m$calificacion, predictedSVM)
+matrizSVM21
+```
+
+```{r}
+precisionSVM_m<-c(matrizSVM21$overall[1])
+names(precisionSVM_m)<-c("radial")
+```
+
+Se prueba a continuación con el kernel polinomial.
+
+```{r}
+fitsvm22 <-svm(calificacion ~., data = Train3.notas_m, kernel="polynomial")
+predictedSVM = predict(fitsvm22,Val3.notas_m)
+matrizSVM22<-confusionMatrix(Val3.notas_m$calificacion, predictedSVM)
+matrizSVM22
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM22$overall[1])
+names(precisionSVM_m)[2]<-c("polinomial")
+```
+
+Ahora con el kernel sigmoidal.
+
+```{r}
+fitsvm23 <-svm(calificacion ~., data = Train3.notas_m, kernel="sigmoid")
+predictedSVM = predict(fitsvm23,Val3.notas_m)
+matrizSVM23<-confusionMatrix(Val3.notas_m$calificacion, predictedSVM)
+matrizSVM23
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM23$overall[1])
+names(precisionSVM_m)[3]<-c("sigmoidal")
+```
+
+Por último, con el kernel lineal.
+
+```{r}
+fitsvm24 <-svm(calificacion ~., data = Train3.notas_m, kernel="linear")
+predictedSVM = predict(fitsvm24,Val3.notas_m)
+matrizSVM24<-confusionMatrix(Val3.notas_m$calificacion, predictedSVM)
+matrizSVM24
+```
+
+```{r}
+precisionSVM_m<-c(precisionSVM_m, matrizSVM24$overall[1])
+names(precisionSVM_m)[4]<-c("lineal")
+```
+
+Se compara a continuación los porcentajes de clasificación correcta obtenidos de los distintos kernel.
+
+```{r}
+precisionSVM_m
+```
+La mejor clasificación es la del kernel lineal, seguida por la del kernel radial y sigmoidal que es la misma, y por último el kernel polinomial.
+
+```{r}
+precision_m3<-c(precision_m3, max(precisionSVM_m))
+names(precision_m3)[3]<-c("SVM")
+```
+
+##### Método 4: Naive Bayes
+
+###### Asignatura: portugués
+
+```{r}
+fitbayes1 <-naiveBayes(calificacion ~., data = Train3.notas_p)
+predictedBayes= predict(fitbayes1,Val3.notas_p)
+matrizNB1<-confusionMatrix(Val3.notas_p$calificacion, predictedBayes)
+matrizNB1
+```
+```{r}
+precision_p3<-c(precision_p3, matrizNB1$overall[1])
+names(precision_p3)[4]<-c("Naive Bayes")
+```
+
+###### Asignatura: matemáticas
+
+```{r}
+fitbayes2 <-naiveBayes(calificacion ~., data = Train3.notas_m)
+predictedBayes= predict(fitbayes2,Val3.notas_m)
+matrizNB2<-confusionMatrix(Val3.notas_m$calificacion, predictedBayes)
+matrizNB2
+```
+
+```{r}
+precision_m3<-c(precision_m3, matrizNB2$overall[1])
+names(precision_m3)[4]<-c("Naive Bayes")
+```
+
+##### Método 5: Árboles de clasificación
+
+###### Asignatura: portugués
+
+```{r}
+tree11 = tree(calificacion~., data = Train3.notas_p)
+summary(tree11)
+```
+```{r}
+plot(tree11)
+text(tree11, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree11, Val3.notas_p, type="class")
+matriztree11<-confusionMatrix(Val3.notas_p$calificacion, predicedtree)
+matriztree11
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree11 = cv.tree(tree11, FUN = prune.misclass)
+plot(cv.tree11)
+```
+
+Se observa como o al tener muy pocas ramas o al aumentar el tamaño del árbol a más de cinco el error aumenta. Por ello, se elige que tenga 5 ramas.
+
+```{r}
+prune.tree11 = prune.misclass(tree11, best = 5)
+plot(prune.tree11)
+text(prune.tree11, pretty=0)
+```
+
+Se observa que las ramas corresponden a las variables: G2, G1 y Mjob.
+
+```{r}
+predicedtree12 = predict(prune.tree11, Val3.notas_p, type="class")
+matriztree12<-confusionMatrix(Val3.notas_p$calificacion, predicedtree12)
+matriztree12
+```
+```{r}
+precision_p3<-c(precision_p3, matriztree12$overall[1])
+names(precision_p3)[5]<-c("Arbol de clasificación")
+```
+
+
+###### Asignatura: matemáticas
+
+```{r}
+tree21 = tree(calificacion~., data = Train3.notas_m)
+summary(tree21)
+```
+```{r}
+plot(tree21)
+text(tree21, pretty = 1)
+```
+Debido a la superposición de las etiquetas, el gráfico no es claro.
+
+```{r}
+predicedtree = predict(tree21, Val3.notas_m, type="class")
+matriztree21<-confusionMatrix(Val3.notas_m$calificacion, predicedtree)
+matriztree21
+```
+Se procede a podarlo para reducir su alta varianza al tener muchas ramas.
+
+```{r}
+cv.tree21 = cv.tree(tree21, FUN = prune.misclass)
+plot(cv.tree21)
+```
+
+Se observa como al tener muy pocas ramas, el porcentaje de error aumenta. Se elige que tenga 3 ramas que es de los números de ramas con menor errores y a partir del cual el error vuelve a crecer.
+
+```{r}
+prune.tree21 = prune.misclass(tree21, best = 3)
+plot(prune.tree21)
+text(prune.tree21, pretty=0)
+```
+
+Se observa que las ramas corresponden a G2, Mjob, absences, studytime y failures.
+
+```{r}
+predicedtree22 = predict(prune.tree21, Val3.notas_m, type="class")
+matriztree22<-confusionMatrix(Val3.notas_m$calificacion, predicedtree22)
+matriztree22
+```
+```{r}
+precision_m3<-c(precision_m3, matriztree22$overall[1])
+names(precision_m3)[5]<-c("Arbol de clasificación")
+```
+
+```{r}
+precision_p<-rbind(precision_p1, precision_p2, precision_p3)
+rownames(precision_p)<-c("Sin G1 y G2", "Con G1 y sin G2", "Con G1 y G2")
+precision_m<-rbind(precision_m1, precision_m2, precision_m3)
+rownames(precision_m)<-c("Sin G1 y G2", "Con G1 y sin G2", "Con G1 y G2")
+```
+
+
+## Discusión
+
+El rendimiento académico de los estudiantes se mide y se cuantifica mediante las notas. Estas notas son de alta importancia en los últimos cursos previos a la universidad ya que pueden restringir la futura educación del estudiante, como por ejemplo las carreraras universitarias o instituciones en las que pueda estudiar. Por ello, es de suma importancia el poder predecir las notas de los estudiantes para en el caso de mal rendimiento proporcionarles la ayuda necesaria antes del examen final.
+
+En la predicción númerica de la nota final mediante regresión múltiple se observa como al no incluir en el análisis las notas de los trimestres previos las predicción explica muy poco porcentaje de la varianza, es decir, no es altamente fiable. Sin embargo en este caso puede servir de ayuda premiliminar antes de conocer la nota del primer trimestre y posteriormente confirmar si necesita ayuda con un mayor porcentaje de fiabilidad. 
+
+```{r}
+R_Cuadrado
+```
+
+
+En este escenario en el que no se tiene ninguna nota previa, en la asignatura de portugués, se observa como el colegio Mousinho da Silveira, el género masculino, los suspensos, el apoyo del colegio, la salud regular o muy bien y las ausencias son factores significativos que influyen de forma negativa en la nota final, especialmente los suspensos. Sin embargo, la edad, el tiempo de estudio superior a diez horas, el querer continuar con su educación, una buena o muy buena relación de familia, salir poco y tener poco  tiempo libre repercuten de manera positiva, especialmente el querer continuar con su educación. En la asigntura de matemáticas son menos las variables significativas pero sus coeficientes repercuten en la nota final de manera similar que en la asignatura de portugués.
+
+Que un estudiante que tenga suspensos previos repercuta de manera negativa en la nota final tiene sentido ya que tiene tendencias previas de suspender. El apoyo del colegio puede mostrar las capacidades de un estudiante, es decir, que si necesita apoyo en la asigntura puede ser que vaya peor y por ello su predicción de nota final sea peor. El que tener salud regular o muy bien repercuta de manera negativa puede deberse a que al tener mejor salud prefieren no preocuparse por sus estudios y centrarse en otras cosas como en salir, jugar, ... Las variables que afectan de forma positiva se ve su relación directamente a excepción de la de tener poco tiempo libre, que considero que puede ser por dedicarle bastante tiempo a los estudios, o la de la edad que puede ser que al repetir la asignatura ya que tenga conocimientos del año anterior y le resulte más fácil.
+
+Al ya incluir la nota del primer trimestre, en la predicción númerica de la nota final el coeficiente de determinación se dispara drásticamente hacia arriba, pasando a ser alrededos del 80%. Esto se debe a la alta correlación entre G1 y G3. En este escenario pasa a ser especialmente significativa la edad, tienendo un efecto negativo. Además se vuelven significativas afectando también negativamente a G3 que los padres de los estudiantes trabajen en trabajos que se han denominado "otros" o "servicios" en la asignatura de portugués y en la de matemáticas el consumo de un poco de alcohol diario. En este análisis existe colinealidad por lo que tampoco es altamente fiable y no se profundizará su análisis del trabajo del padre o cosumno de alcohol. 
+
+El escenario 3, es decir, contando con G1 y G2, es totalmente similar al segundo escenario añadiendole unas decimas al coeficiente de determinación por la nueva variable introducida.
+
+En cuanto al análisis binario de la nota final, clasificando a los alumnos con aprobado o suspenso, los porcentajes de clasificación correcta son los siguientes:
+
+Para la asignatura de portugués:
+```{r}
+precision_p
+```
+Para la asignatura de matemáticas:
+```{r}
+precision_m
+```
+
+Para el escenario 1, sin contar con G1 y G2, el mejor método de predicción en la asignatura de portugués es el árbol de clasificación y en la asignatura de matemáticas es el SVM. En la asignatura de portugués el SVM también es especialmente bueno siendo el segundo mejor.
+
+Para el escenario 2 y el escenario 3, el mejor método de predicción en ambas asignaturas es el árbol de clasificación.
+
+En general, el mejor método de predicción para este estudio son los árboles de clasificación. El peor método de clasificación son las redes neuronales. Esto se puede deber a no haber encontrado una correcta función de activicación.
+
+Se puede concluir que las notas de los alumnos pueden estar influidas por ya no solo la propia inteligencia del alumno, si no por factores del colegio, sociales y demográficos; pero que el mayor factor significativo en la nota final, son las notas previas. Es decir, la nota final está altamente influenciada por la notas previas.
+
+## Bibliografía
+
+Diapositivas de Studium.
+
+P. Cortez y A. Silva. Using Data Mining to Predict Secondary School Student Performance. En A. Brito and J. Teixeira Eds., Proceedings of 5th FUture BUsiness TEChnology Conference (FUBUTEC 2008) pp. 5-12, Porto, Portugal, April, 2008, EUROSIS, ISBN 978-9077381-39-7.
+
+Witten, I. H., Frank, E., & Hall, M. A. (2011). Data mining: Practical machine learning tools and techniques. Burlington, MA: Morgan Kaufmann.
+
+Ye, N., 2014. Data mining: theories, algorithms, and examples. Boca Raton: Taylor & Francis.
+
+Agresti, A. (1990). Categorical data analysis. New York [u.a.]: Wiley
+
+El modelo de redes neuronales. (s. f.). www.ibm.com. https://www.ibm.com/docs/es/spss-modeler/SaaS?topic=networks-neural-model
+
+L Breiman, JH Friedman, RA Olshen, and CJ Stone.Classification and Regression Trees. Wadsworth Inc, 1984
+
+Álvarez Rodríguez, R. (2020). Predicción del rendimiento académico
+en las Matemáticas de la educación Secundaria mediante Redes Neuronales. Universidad Nacional de Educación a Distancia. http://e-spacio.uned.es/fez/eserv/bibliuned:master-Ciencias-FSC-Ralvarez/Alvarez_Rodriguez_Roi_TFM.pdf
+
+Regresión Lineal. En _Wikipedia_. https://es.wikipedia.org/wiki/Regresi%C3%B3n_lineal#Regresi%C3%B3n_lineal_simple
+
+Regresión logística En _Wikipedia_. https://es.wikipedia.org/wiki/Regresi%C3%B3n_log%C3%ADstica
+
+Máxima verosimilitud. En _Wikipedia_. https://es.wikipedia.org/wiki/M%C3%A1xima_verosimilitud
+
+Máquinas de vectores de soporte. En _Wikipedia_. https://es.wikipedia.org/wiki/M%C3%A1quinas_de_vectores_de_soporte
+
+
+
+
+
