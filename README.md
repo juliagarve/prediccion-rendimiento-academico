@@ -1,4 +1,4 @@
-# AcademicPerformancePrediction
+# Predicción del rendimiento académico de estudiantes
 
 Este repositorio contiene el código y los datos relacionados con un estudio sobre la predicción del rendimiento académico de estudiantes de secundaria en asignaturas clave, como matemáticas y portugués.
 
